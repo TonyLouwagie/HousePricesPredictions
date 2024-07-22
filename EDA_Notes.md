@@ -23,5 +23,4 @@ Running List of all takeaways and notes from EDA
   * `GarageCars`
   * `MoSold`
   * `YrSold`
-  * 
 * Compute ```TotalBath = BsmtFullBath + BsmtHalfBath + FullBath + HalfBath```
