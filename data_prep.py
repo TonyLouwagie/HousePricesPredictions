@@ -10,15 +10,16 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
 
     df = pd.read_csv(filepath)
 
+    # set index as ID and drop column
+    df.index = df.Id
+    df = df.drop('Id', axis = 1)
+
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
     # convert strings to category type
     for col in df.select_dtypes(include='object').columns:
         df[col] = pd.Categorical(df[col])
-
-    # ID is unique for each row so it should not be categorical
-    df["Id"] = df.Id.astype(str)
 
     # null alley is not informative. Replace with NA string to make no alley a category in itself
     df["Alley"] = df.Alley.replace(np.nan, "NA")
