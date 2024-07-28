@@ -20,4 +20,9 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
     # compute total number of baths
     df['TotalBath'] = df.BsmtFullBath + df.BsmtHalfBath + df.FullBath + df.HalfBath
 
+    # if YearRemodAdd is same as YearBuilt, there was no remodel
+    df['YearRemodAdd'] = np.where(
+        df.YearRemodAdd == df.YearBuilt, np.nan, df.YearRemodAdd
+    )
+
     return df

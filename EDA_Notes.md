@@ -10,7 +10,7 @@ Running List of all takeaways and notes from EDA
   * `OverallCond`
   * `YearBuilt`
   * `YearRemodAdd`
-    * This needs transformation - if same as construction date, set to NA
+    * This needs transformation - if same as `YearBuilt`, set to NA
   * `BsmtFullBath`
   * `BsmtHalfBath`
   * `FullBath`
