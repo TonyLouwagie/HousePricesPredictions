@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 
 
 def load_and_clean(filepath: str) -> pd.DataFrame:
@@ -13,8 +15,11 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
-    # convert strings to category type
     for col in df.select_dtypes(include='object').columns:
+        df[col] = np.where(
+            df[col].isna(), 'None', df[col]
+        )
+        # convert strings to category type
         df[col] = pd.Categorical(df[col])
 
     # ID is unique for each row so it should not be categorical
@@ -28,7 +33,35 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
 
     # if YearRemodAdd is same as YearBuilt, there was no remodel
     df['YearRemodAdd'] = np.where(
-        df.YearRemodAdd == df.YearBuilt, np.nan, df.YearRemodAdd
+        df.YearRemodAdd == df.YearBuilt, 'None', df.YearRemodAdd
     )
 
     return df
+
+def clean_after_eda(df):
+    """
+    Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
+    documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
+    :param df: pandas dataframe with ID column
+    :return:df: cleaned dataframe
+    :return:imputer: fit imputer
+    """
+    
+    df = df.set_index('Id')
+
+    # Iterative imputer only runs on numeric columns, so we need to separate the numeric columns
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    df_numeric = df.select_dtypes(include=numerics)
+    df_obj = df.select_dtypes(exclude=numerics)
+
+    imputer = IterativeImputer(max_iter=10, random_state=0)
+
+    df_numeric_impute = imputer.fit_transform(df_numeric)
+    df_numeric_impute = pd.DataFrame(df_numeric_impute, columns = df_numeric.columns, index=df_numeric.index)
+
+    # add [cols] to end of this line to return columns in original order
+    cols = df.columns 
+    df = pd.merge(df_obj, df_numeric_impute, left_index=True, right_index=True)[cols]
+
+    return df, imputer
+
