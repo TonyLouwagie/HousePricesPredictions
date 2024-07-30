@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import cross_val_score
 
+
 def cross_val_aggregate(model, X, y, folds):
     
     scores = cross_val_score(model, X, y, cv=folds)
