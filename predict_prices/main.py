@@ -3,7 +3,7 @@ from sklearn.linear_model import LinearRegression
 import cross_validation
 import data_prep
 
-fp = "data/train.csv"
+fp = "predict_prices/data/train.csv"
 tgt = 'SalePrice'
 include_categoricals = False
 folds = 4
