@@ -65,3 +65,14 @@ def clean_after_eda(df):
 
     return df, imputer
 
+def split_x_y(df, tgt, include_categoricals=True, drop=[]):
+
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+
+    X = df.drop([tgt] + drop, axis=1)
+    if not include_categoricals: X = X.select_dtypes(include=numerics)
+    y = df[tgt]
+
+    return X, y
+    
+
