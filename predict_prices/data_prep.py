@@ -39,7 +39,7 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
     return df
 
 
-def clean_after_eda(df):
+def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, IterativeImputer):
     """
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
@@ -67,7 +67,7 @@ def clean_after_eda(df):
     return df, imputer
 
 
-def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []):
+def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (pd.DataFrame, pd.Series):
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
