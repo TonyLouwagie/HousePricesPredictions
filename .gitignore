@@ -1,4 +1,4 @@
-data/
+predict_prices/data/
 .DS_Store
 .idea/
 .ipynb_checkpoints/
