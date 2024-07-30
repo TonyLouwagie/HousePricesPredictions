@@ -5,7 +5,7 @@ from sklearn.model_selection import cross_val_score
 
 def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int):
     """
-
+    Run cross validation and aggregate scores on one model
     :param model: the model to score
     :param X: explanatory variables
     :param y: target variable

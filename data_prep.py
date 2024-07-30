@@ -69,6 +69,7 @@ def clean_after_eda(df):
 
 def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []):
     """
+    Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
     :param tgt: target variable
     :param include_categoricals: boolean indicating whether categoricals should be included in the dataframe
