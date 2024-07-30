@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.model_selection import cross_val_score
 
 
-def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int):
+def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> {str, np.float64}:
     """
     Run cross validation and aggregate scores on one model
     :param model: the model to score
