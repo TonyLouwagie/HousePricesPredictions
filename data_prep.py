@@ -38,6 +38,7 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
 
     return df
 
+
 def clean_after_eda(df):
     """
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
@@ -46,7 +47,7 @@ def clean_after_eda(df):
     :return:df: cleaned dataframe
     :return:imputer: fit imputer
     """
-    
+
     df = df.set_index('Id')
 
     # Iterative imputer only runs on numeric columns, so we need to separate the numeric columns
@@ -57,11 +58,30 @@ def clean_after_eda(df):
     imputer = IterativeImputer(max_iter=10, random_state=0)
 
     df_numeric_impute = imputer.fit_transform(df_numeric)
-    df_numeric_impute = pd.DataFrame(df_numeric_impute, columns = df_numeric.columns, index=df_numeric.index)
+    df_numeric_impute = pd.DataFrame(df_numeric_impute, columns=df_numeric.columns, index=df_numeric.index)
 
     # add [cols] to end of this line to return columns in original order
-    cols = df.columns 
+    cols = df.columns
     df = pd.merge(df_obj, df_numeric_impute, left_index=True, right_index=True)[cols]
 
     return df, imputer
 
+
+def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []):
+    """
+    Split data frame into explanatory variables and target variables
+    :param df: data frame containing data to be modeled
+    :param tgt: target variable
+    :param include_categoricals: boolean indicating whether categoricals should be included in the dataframe
+    :param drop: extra columns to drop from dataset
+    :return: X: dataframe containing x variables, y: dataframe containing target
+    """
+
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+
+    X = df.drop([tgt] + drop, axis=1)
+    if not include_categoricals:
+        X = X.select_dtypes(include=numerics)
+    y = df[tgt]
+
+    return X, y
