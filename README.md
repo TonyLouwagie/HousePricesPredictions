@@ -9,6 +9,6 @@ All dependencies and python versions are managed using [Poetry](https://python-p
 repository, first install poetry following [Poetry's installation instructions](https://python-poetry.org/docs/#installation), 
 then run `poetry install`.
 
-To run the main function, navigat to the root of this repository and run `poetry run python predict_prices/main.py`.
+To run the main function, navigate to the root of this repository and run `poetry run python predict_prices/main.py`.
 
 Additional Poetry usage instructions can be found in Poetry's documentation.
