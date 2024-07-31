@@ -15,7 +15,8 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
-    # Handle nulls in categorical columns by replacing null with Non string
+    # Handle nulls in categorical columns by replacing null with Non string.
+    # Also make these columns categorical rather than strings
     columns = df.select_dtypes(include='object').columns
     df[columns] = df[columns].apply(
         lambda col: pd.Categorical(np.where(
