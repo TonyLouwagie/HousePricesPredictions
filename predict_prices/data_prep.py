@@ -15,12 +15,14 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
-    for col in df.select_dtypes(include='object').columns:
-        df[col] = np.where(
-            df[col].isna(), 'None', df[col]
-        )
-        # convert strings to category type
-        df[col] = pd.Categorical(df[col])
+    # Handle nulls in categorical columns by replacing null with Non string.
+    # Also make these columns categorical rather than strings
+    columns = df.select_dtypes(include='object').columns
+    df[columns] = df[columns].apply(
+        lambda col: pd.Categorical(np.where(
+            col.isna(), 'None', col
+        ))
+    )
 
     # ID is unique for each row so it should not be categorical
     df["Id"] = df.Id.astype(str)
