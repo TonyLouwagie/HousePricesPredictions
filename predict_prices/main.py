@@ -9,7 +9,8 @@ include_categoricals = False
 folds = 4
 lr = LinearRegression()
 
-df = data_prep.load_and_clean(fp)
+df = data_prep.load_data(fp)
+df = data_prep.eda_clean(df)
 df, _ = data_prep.clean_after_eda(df)
 X, y = data_prep.split_x_y(df, tgt, include_categoricals)
 

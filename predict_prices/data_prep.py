@@ -1,17 +1,25 @@
 import numpy as np
 import pandas as pd
 from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
+import sklearn.impute as impute
 
 
-def load_and_clean(filepath: str) -> pd.DataFrame:
+def load_data(filepath: str) -> pd.DataFrame:
     """
-    :param filepath: path where data is stored
-    :return: pandas dataframe containing prepared data
+    read csv into dataframe
+    :param filepath: path to csv that should be loaded
+    :return: df
     """
 
-    df = pd.read_csv(filepath)
+    return pd.read_csv(filepath)
 
+
+def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
+    """
+        Clean data frame to prepare for eda
+        :param df: raw dataframe
+        :return: df: cleaned dataframe
+        """
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
@@ -41,7 +49,7 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
     return df
 
 
-def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, IterativeImputer):
+def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer):
     """
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
@@ -57,7 +65,7 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, IterativeImputer):
     df_numeric = df.select_dtypes(include=numerics)
     df_obj = df.select_dtypes(exclude=numerics)
 
-    imputer = IterativeImputer(max_iter=10, random_state=0)
+    imputer = impute.IterativeImputer(max_iter=10, random_state=0)
 
     df_numeric_impute = imputer.fit_transform(df_numeric)
     df_numeric_impute = pd.DataFrame(df_numeric_impute, columns=df_numeric.columns, index=df_numeric.index)
@@ -69,7 +77,8 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, IterativeImputer):
     return df, imputer
 
 
-def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (pd.DataFrame, pd.Series):
+def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (
+pd.DataFrame, pd.Series):
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
