@@ -3,6 +3,51 @@ import pandas as pd
 from sklearn.experimental import enable_iterative_imputer
 import sklearn.impute as impute
 
+_LOT_SHAPE = ['Reg', 'IR1', 'IR2', 'IR3', 'NA']
+_UTILITIES = ['AllPub', 'NoSewr', 'NoSeWa', 'ELO', 'NA']
+_LAND_SLOPE = ['Gtl', 'Mod', 'Sev', 'NA']
+_EXTER_QUAL = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_EXTER_CON = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_BSMT_QUAL = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_BSMT_COND = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_BSMT_EXPOSURE = ['Gd', 'Av', 'Mn', 'No', 'NA']
+_BSMT_FIN_TYPE_1 = ['GLQ', 'ALQ', 'BLQ', 'Rec', 'LwQ', 'Unf', 'NA']
+_BSMT_FIN_TYPE_2 = ['GLQ', 'ALQ', 'BLQ', 'Rec', 'LwQ', 'Unf', 'NA']
+_HEATING_QC = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_CENTRAL_AIR = ['N', 'Y', 'NA']
+_KITCHEN_QUAL = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_FUNCTIONAL = ['Typ', 'Min1', 'Min2', 'Mod', 'Maj1', 'Maj2', 'Sev', 'Sal', 'NA']
+_FIREPLACE_QU = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_GARAGE_FINISH = ['Fin', 'RFn', 'Unf', 'NA']
+_GARAGE_QUAL = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_GARAGE_COND = ['Ex', 'Gd', 'TA', 'Fa', 'Po', 'NA']
+_PAVED_DRIVE = ['Y', 'P', 'N', 'NA']
+_POOL_QC = ['Ex', 'Gd', 'TA', 'Fa', 'NA']
+_FENCE = ['GdPrv', 'MnPrv', 'GdWo', 'MnWw', 'NA']
+
+_ORDERED_CATEGORICALS = {
+    'LotShape': _LOT_SHAPE,
+    'Utilities': _UTILITIES,
+    'LandSlope': _LAND_SLOPE,
+    'ExterQual': _EXTER_QUAL,
+    'ExterCond': _EXTER_CON,
+    'BsmtQual': _BSMT_QUAL,
+    'BsmtCond': _BSMT_COND,
+    'BsmtExposure': _BSMT_EXPOSURE,
+    'BsmtFinType1': _BSMT_FIN_TYPE_1,
+    'BsmtFinType2': _BSMT_FIN_TYPE_2,
+    'CentralAir': _CENTRAL_AIR,
+    'KitchenQual': _KITCHEN_QUAL,
+    'Functional': _FUNCTIONAL,
+    'FireplaceQu': _FIREPLACE_QU,
+    'GarageFinish': _GARAGE_FINISH,
+    'GarageQual': _GARAGE_QUAL,
+    'GarageCond': _GARAGE_COND,
+    'PavedDrive': _PAVED_DRIVE,
+    'PoolQC': _POOL_QC,
+    'Fence': _FENCE
+}
+
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -24,12 +69,11 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
     # Handle nulls in categorical columns by replacing null with Non string.
-    # Also make these columns categorical rather than strings
-    columns = df.select_dtypes(include='object').columns
-    df[columns] = df[columns].apply(
-        lambda col: pd.Categorical(np.where(
-            col.isna(), 'None', col
-        ))
+    # Also make these columns categorical rather than strings so that we can order the ordinal categoricals
+    objects = df.select_dtypes(include='object').columns
+    df[objects] = df[objects].apply(
+        lambda col: pd.Categorical(convert_na_to_string(col), categories=_ORDERED_CATEGORICALS[col.name],
+                                   ordered=True) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(convert_na_to_string(col))
     )
 
     # ID is unique for each row so it should not be categorical
@@ -43,10 +87,14 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
 
     # if YearRemodAdd is same as YearBuilt, there was no remodel
     df['YearRemodAdd'] = np.where(
-        df.YearRemodAdd == df.YearBuilt, 'None', df.YearRemodAdd
+        df.YearRemodAdd == df.YearBuilt, 'NA', df.YearRemodAdd
     )
 
     return df
+
+
+def convert_na_to_string(col):
+    return np.where(col.isna(), 'NA', col)
 
 
 def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer):
@@ -78,7 +126,7 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer)
 
 
 def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (
-pd.DataFrame, pd.Series):
+        pd.DataFrame, pd.Series):
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
