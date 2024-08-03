@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.experimental import enable_iterative_imputer
 import sklearn.impute as impute
+from sklearn.preprocessing import OrdinalEncoder
 
 _LOT_SHAPE = ['Reg', 'IR1', 'IR2', 'IR3', 'NA']
 _UTILITIES = ['AllPub', 'NoSewr', 'NoSeWa', 'ELO', 'NA']
@@ -123,6 +124,22 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer)
     df = pd.merge(df_obj, df_numeric_impute, left_index=True, right_index=True)[cols]
 
     return df, imputer
+
+
+def ordinal_encode(df) -> (pd.DataFrame, OrdinalEncoder):
+    """
+    ordinal encoder for ordinal categorical variables
+    :param df:
+    :return:
+    """
+    enc = OrdinalEncoder()
+
+    ordinals = list(_ORDERED_CATEGORICALS.keys())
+
+    enc.fit(df[ordinals])
+    df[ordinals] = enc.transform(df[ordinals])
+
+    return df, enc
 
 
 def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (
