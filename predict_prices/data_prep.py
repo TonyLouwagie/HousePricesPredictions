@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.experimental import enable_iterative_imputer
 import sklearn.impute as impute
-from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 
 _LOT_SHAPE = ['Reg', 'IR1', 'IR2', 'IR3', 'NA']
 _UTILITIES = ['AllPub', 'NoSewr', 'NoSeWa', 'ELO', 'NA']
@@ -88,7 +88,7 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
 
     # if YearRemodAdd is same as YearBuilt, there was no remodel
     df['YearRemodAdd'] = np.where(
-        df.YearRemodAdd == df.YearBuilt, 'NA', df.YearRemodAdd
+        df.YearRemodAdd == df.YearBuilt, np.nan, df.YearRemodAdd
     )
 
     return df
@@ -126,11 +126,11 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer)
     return df, imputer
 
 
-def ordinal_encode(df) -> (pd.DataFrame, OrdinalEncoder):
+def ordinal_encode(df: pd.DataFrame) -> (pd.DataFrame, OrdinalEncoder):
     """
     ordinal encoder for ordinal categorical variables
     :param df:
-    :return:
+    :return: dataframe with ordinal encoding of ordinal categorical variables
     """
     enc = OrdinalEncoder()
 
@@ -140,6 +140,33 @@ def ordinal_encode(df) -> (pd.DataFrame, OrdinalEncoder):
     df[ordinals] = enc.transform(df[ordinals])
 
     return df, enc
+
+
+def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEncoder | OrdinalEncoder):
+    """
+    Categorical encoding for non-ordinal categorical variables
+    :param df:
+    :param ohe: boolean, if true use one hot encoder, if false use ordinal encoder
+    :return: df
+    """
+    categorical_columns = df.select_dtypes(include='category').columns
+    if ohe:
+        cat_enc = OneHotEncoder(sparse_output=False)
+        cat_enc.fit(df[categorical_columns])
+        one_hot_encoded = cat_enc.transform(df[categorical_columns])
+
+        one_hot_df = pd.DataFrame(one_hot_encoded, columns=cat_enc.get_feature_names_out(categorical_columns),
+                                  index=df.index)
+        df = pd.merge(df, one_hot_df, left_index=True, right_index=True)
+
+        # Drop the original categorical columns
+        df = df.drop(categorical_columns, axis=1)
+    else:
+        cat_enc = OrdinalEncoder()
+        cat_enc.fit(df[categorical_columns])
+        df[categorical_columns] = cat_enc.transform(df[categorical_columns])
+
+    return df, cat_enc
 
 
 def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (
