@@ -17,6 +17,7 @@ lr = LinearRegression()
 df = data_prep.load_data(fp)
 df = data_prep.eda_clean(df)
 df, _ = data_prep.clean_after_eda(df)
+# TODO: Save enc into the underscore when we need to use it to transform test data
 df, _ = data_prep.ordinal_encode(df)
 X, y = data_prep.split_x_y(df, tgt, include_categoricals)
 
