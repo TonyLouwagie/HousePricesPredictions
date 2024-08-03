@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
 import cross_validation
@@ -16,6 +17,14 @@ folds = 4
 lr = LinearRegression()
 ohe = False
 
+rf = RandomForestRegressor()
+rf_param_grid = {
+    "n_estimators": tuple(range(10, 1000)),
+    "min_samples_split": tuple(range(2, 10)),
+    "min_samples_leaf": tuple(range(1, 10))
+}
+n_iter = 20
+
 train_df = data_prep.load_data(train_fp)
 train_df = data_prep.eda_clean(train_df)
 train_df, _ = data_prep.clean_after_eda(train_df)
@@ -26,9 +35,13 @@ train_df = data_prep.categorical_transform(train_df, cat_enc)
 train_X, train_y = data_prep.split_x_y(train_df, tgt)
 train_X = train_X if include_categoricals else data_prep.drop_categoricals(train_X)
 lr.fit(train_X, train_y)
+rf = cross_validation.bayes_cross_validation(rf, train_X, train_y, rf_param_grid, n_iter)
 
-aggregate_scores = cross_validation.cross_val_aggregate(lr, train_X, train_y, folds)
-print(aggregate_scores)
+lr_aggregate_scores = cross_validation.cross_val_aggregate(lr, train_X, train_y, folds)
+rf_aggregate_scores = cross_validation.cross_val_aggregate(rf, train_X, train_y, folds)
+
+print("linear regression:", lr_aggregate_scores)
+print("random forest:", rf_aggregate_scores)
 
 test_df = data_prep.load_data(test_fp)
 test_df = data_prep.eda_clean(test_df)
