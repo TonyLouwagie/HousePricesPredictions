@@ -150,7 +150,6 @@ def ordinal_transform(df: pd.DataFrame, enc: OrdinalEncoder):
     :return:
     """
     ordinals = list(_ORDERED_CATEGORICALS.keys())
-    print(ordinals[1])
     df[ordinals] = enc.transform(df[ordinals])
 
     return df
@@ -210,7 +209,8 @@ def split_x_y(df: pd.DataFrame, tgt: str, drop=None) -> (
     if drop is None:
         drop = []
     X = df.drop([tgt] + drop, axis=1)
-    y = df[tgt]
+    # The metric of interest is log transformed RMSE
+    y = np.log(df[tgt])
 
     return X, y
 
