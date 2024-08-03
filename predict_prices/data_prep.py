@@ -68,6 +68,7 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
         """
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
+    df = df.drop('Utilities', axis=1)
 
     # Handle nulls in categorical columns by replacing null with Non string.
     # Also make these columns categorical rather than strings so that we can order the ordinal categoricals
@@ -126,7 +127,7 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer)
     return df, imputer
 
 
-def ordinal_encode(df: pd.DataFrame) -> (pd.DataFrame, OrdinalEncoder):
+def ordinal_encode(df: pd.DataFrame) -> OrdinalEncoder:
     """
     ordinal encoder for ordinal categorical variables
     :param df:
@@ -137,9 +138,16 @@ def ordinal_encode(df: pd.DataFrame) -> (pd.DataFrame, OrdinalEncoder):
     ordinals = list(_ORDERED_CATEGORICALS.keys())
 
     enc.fit(df[ordinals])
+
+    return enc
+
+
+def ordinal_transform(df: pd.DataFrame, enc: OrdinalEncoder):
+    ordinals = list(_ORDERED_CATEGORICALS.keys())
+    print(ordinals[1])
     df[ordinals] = enc.transform(df[ordinals])
 
-    return df, enc
+    return df
 
 
 def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEncoder | OrdinalEncoder):
