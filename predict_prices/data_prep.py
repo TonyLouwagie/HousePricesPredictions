@@ -129,7 +129,7 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer)
 
 def ordinal_encode(df: pd.DataFrame) -> OrdinalEncoder:
     """
-    ordinal encoder for ordinal categorical variables
+    fit ordinal encoder for ordinal categorical variables
     :param df:
     :return: dataframe with ordinal encoding of ordinal categorical variables
     """
@@ -143,6 +143,12 @@ def ordinal_encode(df: pd.DataFrame) -> OrdinalEncoder:
 
 
 def ordinal_transform(df: pd.DataFrame, enc: OrdinalEncoder):
+    """
+    use fit ordinal encoder to transform ordinal columns
+    :param df:
+    :param enc: OrdinalEncoder
+    :return:
+    """
     ordinals = list(_ORDERED_CATEGORICALS.keys())
     print(ordinals[1])
     df[ordinals] = enc.transform(df[ordinals])
@@ -154,7 +160,7 @@ def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEnc
     """
     Categorical encoding for non-ordinal categorical variables
     :param df:
-    :param ohe: boolean, if true use one hot encoder, if false use ordinal encoder
+    :param ohe: boolean, if true use one hot encoder else use ordinal encoder
     :return: df
     """
     categorical_columns = df.select_dtypes(include='category').columns
@@ -170,9 +176,15 @@ def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEnc
 
 
 def categorical_transform(df: pd.DataFrame, cat_enc: OrdinalEncoder | OneHotEncoder) -> pd.DataFrame:
+    """
+    Use fit categorical encoder to transform dataset
+    :param df:
+    :param cat_enc: Can be OrdinalEncoder or OneHotEncoder
+    :return: df
+    """
     categorical_columns = df.select_dtypes(include='category').columns
 
-    if type(cat_enc) == OneHotEncoder:
+    if isinstance(cat_enc, OneHotEncoder):
         one_hot_encoded = cat_enc.transform(df[categorical_columns])
         one_hot_df = pd.DataFrame(one_hot_encoded, columns=cat_enc.get_feature_names_out(categorical_columns),
                                   index=df.index)
@@ -185,17 +197,18 @@ def categorical_transform(df: pd.DataFrame, cat_enc: OrdinalEncoder | OneHotEnco
     return df
 
 
-def split_x_y(df: pd.DataFrame, tgt: str, drop: list = []) -> (
+def split_x_y(df: pd.DataFrame, tgt: str, drop=None) -> (
         pd.DataFrame, pd.Series):
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
     :param tgt: target variable
-    :param include_categoricals: boolean indicating whether categoricals should be included in the dataframe
     :param drop: extra columns to drop from dataset
     :return: X: dataframe containing x variables, y: dataframe containing target
     """
 
+    if drop is None:
+        drop = []
     X = df.drop([tgt] + drop, axis=1)
     y = df[tgt]
 
@@ -203,6 +216,11 @@ def split_x_y(df: pd.DataFrame, tgt: str, drop: list = []) -> (
 
 
 def drop_categoricals(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    drop any categorical columns from DF. We want this option because many model types can't handle categoricals
+    :param df:
+    :return: df
+    """
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
     df = df.select_dtypes(include=numerics)
