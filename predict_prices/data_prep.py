@@ -68,14 +68,14 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
         """
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
-    df = df.drop('Utilities', axis=1)
 
     # Handle nulls in categorical columns by replacing null with Non string.
     # Also make these columns categorical rather than strings so that we can order the ordinal categoricals
     objects = df.select_dtypes(include='object').columns
     df[objects] = df[objects].apply(
         lambda col: pd.Categorical(convert_na_to_string(col), categories=_ORDERED_CATEGORICALS[col.name],
-                                   ordered=True) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(convert_na_to_string(col))
+                                   ordered=True) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(
+            convert_na_to_string(col))
     )
 
     # ID is unique for each row so it should not be categorical
@@ -133,7 +133,7 @@ def ordinal_encode(df: pd.DataFrame) -> OrdinalEncoder:
     :param df:
     :return: dataframe with ordinal encoding of ordinal categorical variables
     """
-    enc = OrdinalEncoder()
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
 
     ordinals = list(_ORDERED_CATEGORICALS.keys())
 
@@ -159,25 +159,33 @@ def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEnc
     """
     categorical_columns = df.select_dtypes(include='category').columns
     if ohe:
-        cat_enc = OneHotEncoder(sparse_output=False)
+        cat_enc = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
         cat_enc.fit(df[categorical_columns])
-        one_hot_encoded = cat_enc.transform(df[categorical_columns])
 
+    else:
+        cat_enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+        cat_enc.fit(df[categorical_columns])
+
+    return cat_enc
+
+
+def categorical_transform(df: pd.DataFrame, cat_enc: OrdinalEncoder | OneHotEncoder) -> pd.DataFrame:
+    categorical_columns = df.select_dtypes(include='category').columns
+
+    if type(cat_enc) == OneHotEncoder:
+        one_hot_encoded = cat_enc.transform(df[categorical_columns])
         one_hot_df = pd.DataFrame(one_hot_encoded, columns=cat_enc.get_feature_names_out(categorical_columns),
                                   index=df.index)
         df = pd.merge(df, one_hot_df, left_index=True, right_index=True)
-
         # Drop the original categorical columns
         df = df.drop(categorical_columns, axis=1)
     else:
-        cat_enc = OrdinalEncoder()
-        cat_enc.fit(df[categorical_columns])
         df[categorical_columns] = cat_enc.transform(df[categorical_columns])
 
-    return df, cat_enc
+    return df
 
 
-def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, drop: list = []) -> (
+def split_x_y(df: pd.DataFrame, tgt: str, drop: list = []) -> (
         pd.DataFrame, pd.Series):
     """
     Split data frame into explanatory variables and target variables
@@ -188,11 +196,15 @@ def split_x_y(df: pd.DataFrame, tgt: str, include_categoricals: bool = True, dro
     :return: X: dataframe containing x variables, y: dataframe containing target
     """
 
-    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-
     X = df.drop([tgt] + drop, axis=1)
-    if not include_categoricals:
-        X = X.select_dtypes(include=numerics)
     y = df[tgt]
 
     return X, y
+
+
+def drop_categoricals(df: pd.DataFrame) -> pd.DataFrame:
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+
+    df = df.select_dtypes(include=numerics)
+
+    return df
