@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.linear_model import LinearRegression
 
 import cross_validation
@@ -18,7 +19,6 @@ ohe = False
 train_df = data_prep.load_data(train_fp)
 train_df = data_prep.eda_clean(train_df)
 train_df, _ = data_prep.clean_after_eda(train_df)
-# TODO: Save enc into the underscore when we need to use it to transform test data
 ord_enc = data_prep.ordinal_encode(train_df)
 train_df = data_prep.ordinal_transform(train_df, ord_enc)
 cat_enc = data_prep.categorical_encoder(train_df, ohe)
@@ -37,6 +37,7 @@ test_df = data_prep.ordinal_transform(test_df, ord_enc)
 test_df = data_prep.categorical_transform(test_df, cat_enc)
 test_X = test_df if include_categoricals else data_prep.drop_categoricals(test_df)
 
-test_y = lr.predict(test_X)
+# the model was trained against log transformed target. Invert log for predictions
+test_y = np.exp(lr.predict(test_X))
 
 print(test_y[:4])
