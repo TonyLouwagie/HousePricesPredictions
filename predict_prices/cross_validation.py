@@ -29,13 +29,13 @@ def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> {st
 
 def bayes_cross_validation(model, train_X: pd.DataFrame, train_y: pd.Series, param_grid: dict, n_iter: int):
     """
-
+    Cross validation with a hyperparameter grid so we can tune to the best hyperparameters for each model
     :param model:
     :param train_X:
     :param train_y:
     :param param_grid:
     :param n_iter:
-    :return:
+    :return: best
     """
     best = BayesSearchCV(estimator=model,
                          search_spaces=param_grid,
