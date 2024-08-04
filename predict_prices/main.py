@@ -54,85 +54,32 @@ train_df = data_prep.categorical_transform(train_df, cat_enc)
 train_X, train_y = data_prep.split_x_y(train_df, tgt)
 train_X = train_X if include_categoricals else data_prep.drop_categoricals(train_X)
 
+
+
+
 lr.fit(train_X, train_y)
-lr_aggregate_scores = cross_validation.cross_val_aggregate(lr, train_X, train_y, folds)
-lr_param_scores = {
-    "model": lr,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": lr_aggregate_scores["Mean"],
-    "standard_dev": lr_aggregate_scores["Standard Deviation"]
-}
+lr_param_scores = cross_validation.save_model_performance_parameters(lr, train_X, train_y, folds, ord_enc, cat_enc)
 
 en.fit(train_X, train_y)
-en_aggregate_scores = cross_validation.cross_val_aggregate(en, train_X, train_y, folds)
-en_param_scores = {
-    "model": en,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": en_aggregate_scores["Mean"],
-    "standard_dev": en_aggregate_scores["Standard Deviation"]
-}
+en_param_scores = cross_validation.save_model_performance_parameters(en, train_X, train_y, folds, ord_enc, cat_enc)
 
 lasso.fit(train_X, train_y)
-lasso_aggregate_scores = cross_validation.cross_val_aggregate(lasso, train_X, train_y, folds)
-lasso_param_scores = {
-    "model": lasso,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": lasso_aggregate_scores["Mean"],
-    "standard_dev": lasso_aggregate_scores["Standard Deviation"]
-}
+lasso_param_scores = cross_validation.save_model_performance_parameters(lasso, train_X, train_y, folds, ord_enc, cat_enc)
 
 ridge.fit(train_X, train_y)
-ridge_aggregate_scores = cross_validation.cross_val_aggregate(ridge, train_X, train_y, folds)
-ridge_param_scores = {
-    "model": ridge,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": ridge_aggregate_scores["Mean"],
-    "standard_dev": ridge_aggregate_scores["Standard Deviation"]
-}
+ridge_param_scores = cross_validation.save_model_performance_parameters(ridge, train_X, train_y, folds, ord_enc, cat_enc)
 
 br.fit(train_X, train_y)
-br_aggregate_scores = cross_validation.cross_val_aggregate(br, train_X, train_y, folds)
-br_param_scores = {
-    "model": br,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": br_aggregate_scores["Mean"],
-    "standard_dev": br_aggregate_scores["Standard Deviation"]
-}
+br_param_scores = cross_validation.save_model_performance_parameters(br, train_X, train_y, folds, ord_enc, cat_enc)
 
 rf = cross_validation.bayes_cross_validation(rf, train_X, train_y, rf_param_grid, n_iter)
-rf_aggregate_scores = cross_validation.cross_val_aggregate(rf, train_X, train_y, folds)
-rf_param_scores = {
-    "model": rf,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": rf_aggregate_scores["Mean"],
-    "standard_dev": rf_aggregate_scores["Standard Deviation"]
-}
+rf_param_scores = cross_validation.save_model_performance_parameters(rf, train_X, train_y, folds, ord_enc, cat_enc)
 
 xgb = cross_validation.bayes_cross_validation(xgb, train_X, train_y, xgb_param_grid, n_iter)
-xgb_aggregate_scores = cross_validation.cross_val_aggregate(xgb, train_X, train_y, folds)
-xgb_param_scores = {
-    "model": xgb,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": xgb_aggregate_scores["Mean"],
-    "standard_dev": xgb_aggregate_scores["Standard Deviation"]
-}
+xgb_param_scores = cross_validation.save_model_performance_parameters(xgb, train_X, train_y, folds, ord_enc, cat_enc)
 
 lgbm = cross_validation.bayes_cross_validation(lgbm, train_X, train_y, lgbm_param_grid, n_iter)
-lgbm_aggregate_scores = cross_validation.cross_val_aggregate(lgbm, train_X, train_y, folds)
-lgbm_param_scores = {
-    "model": lgbm,
-    "ordinal_encoder": ord_enc,
-    "categorical_encoder": cat_enc,
-    "score": lgbm_aggregate_scores["Mean"],
-    "standard_dev": lgbm_aggregate_scores["Standard Deviation"]
-}
+lgbm_param_scores = cross_validation.save_model_performance_parameters(lgbm, train_X, train_y, folds, ord_enc, cat_enc)
 
 models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores]
 

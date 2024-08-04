@@ -27,6 +27,19 @@ def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> {st
     return aggregate_scores
 
 
+def save_model_performance_parameters(model, train_X, train_y, folds, ord_enc, cat_enc):
+    aggregate_scores = cross_val_aggregate(model, train_X, train_y, folds)
+    param_scores = {
+        "model": model,
+        "ordinal_encoder": ord_enc,
+        "categorical_encoder": cat_enc,
+        "score": aggregate_scores["Mean"],
+        "standard_dev": aggregate_scores["Standard Deviation"]
+    }
+
+    return param_scores
+
+
 def bayes_cross_validation(model, train_X: pd.DataFrame, train_y: pd.Series, param_grid: dict, n_iter: int):
     """
     Cross validation with a hyperparameter grid so we can tune to the best hyperparameters for each model
