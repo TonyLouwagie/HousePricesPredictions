@@ -15,11 +15,11 @@ tgt = 'SalePrice'
 # temporary variable to remove categoricals
 include_categoricals = False
 # number of folds to cross-validate across
-folds = 2
+folds = 4
 # model to cross validate
 lr = LinearRegression()
 ohe = False
-n_iter = 2
+n_iter = 20
 
 # Initialize all model types
 rf = RandomForestRegressor()
