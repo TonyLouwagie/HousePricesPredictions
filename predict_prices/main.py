@@ -155,5 +155,10 @@ test_X = test_df if include_categoricals else data_prep.drop_categoricals(test_d
 
 # the model was trained against log transformed target. Invert log for predictions
 test_y = np.exp(champ_model.predict(test_X))
+print(test_X.head())
 
-print(test_y[:4])
+test_y = pd.DataFrame(test_y, columns=['SalePrice'], index=test_X.index)
+
+test_y.to_csv('prediction.csv')
+
+#print(test_y.head())
