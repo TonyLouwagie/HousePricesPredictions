@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.experimental import enable_iterative_imputer
 import sklearn.impute as impute
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 
@@ -115,7 +114,7 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer)
     df_numeric = df.select_dtypes(include=numerics)
     df_obj = df.select_dtypes(exclude=numerics)
 
-    imputer = impute.IterativeImputer(max_iter=10, random_state=0)
+    imputer = impute.KNNImputer()
 
     df_numeric_impute = imputer.fit_transform(df_numeric)
     df_numeric_impute = pd.DataFrame(df_numeric_impute, columns=df_numeric.columns, index=df_numeric.index)

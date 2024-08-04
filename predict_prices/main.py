@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
@@ -23,7 +24,7 @@ rf_param_grid = {
     "min_samples_split": tuple(range(2, 10)),
     "min_samples_leaf": tuple(range(1, 10))
 }
-n_iter = 20
+n_iter = 2
 
 train_df = data_prep.load_data(train_fp)
 train_df = data_prep.eda_clean(train_df)
@@ -34,23 +35,45 @@ cat_enc = data_prep.categorical_encoder(train_df, ohe)
 train_df = data_prep.categorical_transform(train_df, cat_enc)
 train_X, train_y = data_prep.split_x_y(train_df, tgt)
 train_X = train_X if include_categoricals else data_prep.drop_categoricals(train_X)
+
 lr.fit(train_X, train_y)
-rf = cross_validation.bayes_cross_validation(rf, train_X, train_y, rf_param_grid, n_iter)
-
 lr_aggregate_scores = cross_validation.cross_val_aggregate(lr, train_X, train_y, folds)
-rf_aggregate_scores = cross_validation.cross_val_aggregate(rf, train_X, train_y, folds)
+lr_param_scores = {
+    "model": lr,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": lr_aggregate_scores["Mean"],
+    "standard_dev": lr_aggregate_scores["Standard Deviation"]
+}
 
-print("linear regression:", lr_aggregate_scores)
-print("random forest:", rf_aggregate_scores)
+rf = cross_validation.bayes_cross_validation(rf, train_X, train_y, rf_param_grid, n_iter)
+rf_aggregate_scores = cross_validation.cross_val_aggregate(rf, train_X, train_y, folds)
+rf_param_scores = {
+    "model": rf,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": rf_aggregate_scores["Mean"],
+    "standard_dev": rf_aggregate_scores["Standard Deviation"]
+}
+
+param_scores = pd.DataFrame([lr_param_scores, rf_param_scores])
+
+print(param_scores)
+
+# take only first row in case of ties (I don't care which model if they're tied)
+champ = param_scores[param_scores.score == param_scores.score.max()].reset_index()
+champ_model = champ.model[0]
+champ_ord_enc = champ.ordinal_encoder[0]
+champ_cat_enc = champ.categorical_encoder[0]
 
 test_df = data_prep.load_data(test_fp)
 test_df = data_prep.eda_clean(test_df)
 test_df, _ = data_prep.clean_after_eda(test_df)
-test_df = data_prep.ordinal_transform(test_df, ord_enc)
-test_df = data_prep.categorical_transform(test_df, cat_enc)
+test_df = data_prep.ordinal_transform(test_df, champ_ord_enc)
+test_df = data_prep.categorical_transform(test_df, champ_cat_enc)
 test_X = test_df if include_categoricals else data_prep.drop_categoricals(test_df)
 
 # the model was trained against log transformed target. Invert log for predictions
-test_y = np.exp(lr.predict(test_X))
+test_y = np.exp(champ_model.predict(test_X))
 
 print(test_y[:4])
