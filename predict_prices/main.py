@@ -1,7 +1,9 @@
+import lightgbm
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, ElasticNet, Lasso, Ridge, BayesianRidge
+import xgboost
 
 import cross_validation
 import data_prep
@@ -13,10 +15,11 @@ tgt = 'SalePrice'
 # temporary variable to remove categoricals
 include_categoricals = False
 # number of folds to cross-validate across
-folds = 4
+folds = 2
 # model to cross validate
 lr = LinearRegression()
 ohe = False
+n_iter = 2
 
 rf = RandomForestRegressor()
 rf_param_grid = {
@@ -24,7 +27,22 @@ rf_param_grid = {
     "min_samples_split": tuple(range(2, 10)),
     "min_samples_leaf": tuple(range(1, 10))
 }
-n_iter = 2
+
+xgb = xgboost.XGBRegressor()
+xgb_param_grid = {
+    "booster": ['gbtree', 'gblinear']
+}
+
+lgbm = lightgbm.LGBMRegressor(verbose=-1)
+lgbm_param_grid = {
+    'max_depth': tuple(range(1, 100)),
+    'num_leaves': tuple(range(1, 100000, 100))
+}
+
+en = ElasticNet()
+lasso = Lasso()
+ridge = Ridge()
+br = BayesianRidge()
 
 train_df = data_prep.load_data(train_fp)
 train_df = data_prep.eda_clean(train_df)
@@ -46,6 +64,46 @@ lr_param_scores = {
     "standard_dev": lr_aggregate_scores["Standard Deviation"]
 }
 
+en.fit(train_X, train_y)
+en_aggregate_scores = cross_validation.cross_val_aggregate(en, train_X, train_y, folds)
+en_param_scores = {
+    "model": en,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": en_aggregate_scores["Mean"],
+    "standard_dev": en_aggregate_scores["Standard Deviation"]
+}
+
+lasso.fit(train_X, train_y)
+lasso_aggregate_scores = cross_validation.cross_val_aggregate(lasso, train_X, train_y, folds)
+lasso_param_scores = {
+    "model": lasso,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": lasso_aggregate_scores["Mean"],
+    "standard_dev": lasso_aggregate_scores["Standard Deviation"]
+}
+
+ridge.fit(train_X, train_y)
+ridge_aggregate_scores = cross_validation.cross_val_aggregate(ridge, train_X, train_y, folds)
+ridge_param_scores = {
+    "model": ridge,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": ridge_aggregate_scores["Mean"],
+    "standard_dev": ridge_aggregate_scores["Standard Deviation"]
+}
+
+br.fit(train_X, train_y)
+br_aggregate_scores = cross_validation.cross_val_aggregate(br, train_X, train_y, folds)
+br_param_scores = {
+    "model": br,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": br_aggregate_scores["Mean"],
+    "standard_dev": br_aggregate_scores["Standard Deviation"]
+}
+
 rf = cross_validation.bayes_cross_validation(rf, train_X, train_y, rf_param_grid, n_iter)
 rf_aggregate_scores = cross_validation.cross_val_aggregate(rf, train_X, train_y, folds)
 rf_param_scores = {
@@ -56,9 +114,31 @@ rf_param_scores = {
     "standard_dev": rf_aggregate_scores["Standard Deviation"]
 }
 
-param_scores = pd.DataFrame([lr_param_scores, rf_param_scores])
+xgb = cross_validation.bayes_cross_validation(xgb, train_X, train_y, xgb_param_grid, n_iter)
+xgb_aggregate_scores = cross_validation.cross_val_aggregate(xgb, train_X, train_y, folds)
+xgb_param_scores = {
+    "model": xgb,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": xgb_aggregate_scores["Mean"],
+    "standard_dev": xgb_aggregate_scores["Standard Deviation"]
+}
 
-print(param_scores)
+lgbm = cross_validation.bayes_cross_validation(lgbm, train_X, train_y, lgbm_param_grid, n_iter)
+lgbm_aggregate_scores = cross_validation.cross_val_aggregate(lgbm, train_X, train_y, folds)
+lgbm_param_scores = {
+    "model": lgbm,
+    "ordinal_encoder": ord_enc,
+    "categorical_encoder": cat_enc,
+    "score": lgbm_aggregate_scores["Mean"],
+    "standard_dev": lgbm_aggregate_scores["Standard Deviation"]
+}
+
+models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores]
+
+param_scores = pd.DataFrame(models).sort_values('score',ascending=False)
+
+print(param_scores[['model','score','standard_dev']])
 
 # take only first row in case of ties (I don't care which model if they're tied)
 champ = param_scores[param_scores.score == param_scores.score.max()].reset_index()
