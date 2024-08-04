@@ -98,7 +98,7 @@ def convert_na_to_string(col):
     return np.where(col.isna(), 'NA', col)
 
 
-def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.IterativeImputer):
+def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.KNNImputer):
     """
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
