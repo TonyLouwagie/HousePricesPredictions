@@ -3,3 +3,4 @@ predict_prices/data/
 .idea/
 .ipynb_checkpoints/
 *__pycache__*
+prediction.csv
