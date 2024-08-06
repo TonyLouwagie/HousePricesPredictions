@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-import sklearn.impute as impute
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
+from sklearn import impute, preprocessing  # type: ignore
 
 _LOT_SHAPE = ['Reg', 'IR1', 'IR2', 'IR3', 'NA']
 _UTILITIES = ['AllPub', 'NoSewr', 'NoSeWa', 'ELO', 'NA']
@@ -70,7 +69,7 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
 
     # Handle nulls in categorical columns by replacing null with Non string.
     # Also make these columns categorical rather than strings so that we can order the ordinal categoricals
-    objects = df.select_dtypes(include='object').columns
+    objects = df.select_dtypes(include=object).columns
     df[objects] = df[objects].apply(
         lambda col: pd.Categorical(convert_na_to_string(col), categories=_ORDERED_CATEGORICALS[col.name],
                                    ordered=True) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(
@@ -98,21 +97,19 @@ def convert_na_to_string(col):
     return np.where(col.isna(), 'NA', col)
 
 
-def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.KNNImputer):
+def clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
     """
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
     :param df: pandas dataframe with ID column
-    :return:df: cleaned dataframe
-    :return:imputer: fit imputer
+    :return:tuple[df, imputer]: cleaned dataframe
     """
 
     df = df.set_index('Id')
 
     # Iterative imputer only runs on numeric columns, so we need to separate the numeric columns
-    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    df_numeric = df.select_dtypes(include=numerics)
-    df_obj = df.select_dtypes(exclude=numerics)
+    df_numeric = df.select_dtypes(include=[int, float])
+    df_obj = df.select_dtypes(exclude=[int, float])
 
     imputer = impute.KNNImputer()
 
@@ -126,13 +123,13 @@ def clean_after_eda(df: pd.DataFrame) -> (pd.DataFrame, impute.KNNImputer):
     return df, imputer
 
 
-def ordinal_encode(df: pd.DataFrame) -> OrdinalEncoder:
+def ordinal_encode(df: pd.DataFrame) -> preprocessing.OrdinalEncoder:
     """
     fit ordinal encoder for ordinal categorical variables
     :param df:
     :return: dataframe with ordinal encoding of ordinal categorical variables
     """
-    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+    enc = preprocessing.OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
 
     ordinals = list(_ORDERED_CATEGORICALS.keys())
 
@@ -141,7 +138,7 @@ def ordinal_encode(df: pd.DataFrame) -> OrdinalEncoder:
     return enc
 
 
-def ordinal_transform(df: pd.DataFrame, enc: OrdinalEncoder):
+def ordinal_transform(df: pd.DataFrame, enc: preprocessing.OrdinalEncoder):
     """
     use fit ordinal encoder to transform ordinal columns
     :param df:
@@ -154,7 +151,7 @@ def ordinal_transform(df: pd.DataFrame, enc: OrdinalEncoder):
     return df
 
 
-def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEncoder | OrdinalEncoder):
+def categorical_encoder(df: pd.DataFrame, ohe: bool) -> preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder:
     """
     Categorical encoding for non-ordinal categorical variables
     :param df:
@@ -163,17 +160,17 @@ def categorical_encoder(df: pd.DataFrame, ohe: bool) -> (pd.DataFrame, OneHotEnc
     """
     categorical_columns = df.select_dtypes(include='category').columns
     if ohe:
-        cat_enc = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        cat_enc = preprocessing.OneHotEncoder(sparse_output=False, handle_unknown='ignore')
         cat_enc.fit(df[categorical_columns])
 
     else:
-        cat_enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+        cat_enc = preprocessing.OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
         cat_enc.fit(df[categorical_columns])
 
     return cat_enc
 
 
-def categorical_transform(df: pd.DataFrame, cat_enc: OrdinalEncoder | OneHotEncoder) -> pd.DataFrame:
+def categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder) -> pd.DataFrame:
     """
     Use fit categorical encoder to transform dataset
     :param df:
@@ -182,7 +179,7 @@ def categorical_transform(df: pd.DataFrame, cat_enc: OrdinalEncoder | OneHotEnco
     """
     categorical_columns = df.select_dtypes(include='category').columns
 
-    if isinstance(cat_enc, OneHotEncoder):
+    if isinstance(cat_enc, preprocessing.OneHotEncoder):
         one_hot_encoded = cat_enc.transform(df[categorical_columns])
         one_hot_df = pd.DataFrame(one_hot_encoded, columns=cat_enc.get_feature_names_out(categorical_columns),
                                   index=df.index)
@@ -195,8 +192,7 @@ def categorical_transform(df: pd.DataFrame, cat_enc: OrdinalEncoder | OneHotEnco
     return df
 
 
-def split_x_y(df: pd.DataFrame, tgt: str, drop=None) -> (
-        pd.DataFrame, pd.Series):
+def split_x_y(df: pd.DataFrame, tgt: str, drop=None) -> tuple[pd.DataFrame, pd.Series]:
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
@@ -220,8 +216,6 @@ def drop_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     :param df:
     :return: df
     """
-    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-
-    df = df.select_dtypes(include=numerics)
+    df = df.select_dtypes(include=[int, float])
 
     return df
