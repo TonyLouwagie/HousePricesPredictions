@@ -4,8 +4,8 @@ import pandas as pd
 from sklearn import ensemble, linear_model # type: ignore
 import xgboost
 
-import cross_validation # type: ignore
-import data_prep # type: ignore
+import cross_validation
+import data_prep
 
 train_fp = "predict_prices/data/train.csv"
 test_fp = "predict_prices/data/test.csv"
