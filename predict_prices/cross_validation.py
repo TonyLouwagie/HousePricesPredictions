@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score
-from skopt import BayesSearchCV
+from sklearn.model_selection import cross_val_score # type: ignore
+from skopt import BayesSearchCV # type: ignore
 
 
-def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> {str, np.float64}:
+def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> dict[str, float]:
     """
     Run cross validation and aggregate scores on one model
     :param model: the model to score

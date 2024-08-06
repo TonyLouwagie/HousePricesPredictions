@@ -1,8 +1,7 @@
 import lightgbm
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression, ElasticNet, Lasso, Ridge, BayesianRidge
+from sklearn import ensemble, linear_model # type: ignore
 import xgboost
 
 import cross_validation
@@ -17,12 +16,12 @@ include_categoricals = False
 # number of folds to cross-validate across
 folds = 4
 # model to cross validate
-lr = LinearRegression()
+lr = linear_model.LinearRegression()
 ohe = False
 n_iter = 20
 
 # Initialize all model types
-rf = RandomForestRegressor()
+rf = ensemble.RandomForestRegressor()
 rf_param_grid = {
     "n_estimators": tuple(range(10, 1000)),
     "min_samples_split": tuple(range(2, 10)),
@@ -40,10 +39,10 @@ lgbm_param_grid = {
     'num_leaves': tuple(range(1, 100000, 100))
 }
 
-en = ElasticNet()
-lasso = Lasso()
-ridge = Ridge()
-br = BayesianRidge()
+en = linear_model.ElasticNet()
+lasso = linear_model.Lasso()
+ridge = linear_model.Ridge()
+br = linear_model.BayesianRidge()
 
 # 1. read in training data, perform data prep
 train_df = data_prep.load_data(train_fp)
