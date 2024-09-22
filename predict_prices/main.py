@@ -82,7 +82,8 @@ def main():
     lgbm_param_scores = cross_validation.save_model_performance_parameters(lgbm, train_X, train_y, folds, ord_enc, cat_enc)
 
     # 3. Compare performance and select best model
-    models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores]
+    models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores,
+              ridge_param_scores, br_param_scores]
     param_scores = pd.DataFrame(models).sort_values('score', ascending=False)
 
     print(param_scores[['model', 'score', 'standard_dev']])
