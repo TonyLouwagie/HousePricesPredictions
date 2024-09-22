@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 from sklearn import impute, preprocessing  # type: ignore
@@ -58,38 +60,63 @@ def load_data(filepath: str) -> pd.DataFrame:
     return pd.read_csv(filepath)
 
 
-def train_data_prep(
-        train_df: pd.DataFrame,
-        ohe_bool: bool,
-        target_variable: str,
-        include_categoricals: bool
-) -> (pd.DataFrame, pd.DataFrame, preprocessing.OrdinalEncoder, preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder):
-    train_df = eda_clean(train_df)
-    train_df, _ = clean_after_eda(train_df)
-    ord_enc = ordinal_encode(train_df)
-    train_df = ordinal_transform(train_df, ord_enc)
-    cat_enc = categorical_encoder(train_df, ohe_bool)
-    train_df = categorical_transform(train_df, cat_enc)
-    train_X, train_y = split_x_y(train_df, target_variable)
-    train_X = train_X if include_categoricals else drop_categoricals(train_X)
-
-    return train_X, train_y, ord_enc, cat_enc
+@dataclass
+class TrainData:
+    X: pd.DataFrame
+    y: pd.Series
 
 
-def test_data_prep(
-        test_df: pd.DataFrame,
-        champ_ord_enc: preprocessing.OrdinalEncoder,
-        champ_cat_enc: preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder,
-        include_categoricals: bool
-) -> pd.DataFrame:
+@dataclass
+class CategoricalEncoders:
+    # TODO: can ordinal_encoder and categorical_encoder be combined?
+    ordinal_encoder: preprocessing.OrdinalEncoder
+    categorical_encoder: preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder
 
-    test_df = eda_clean(test_df)
-    test_df, _ = clean_after_eda(test_df)
-    test_df = ordinal_transform(test_df, champ_ord_enc)
-    test_df = categorical_transform(test_df, champ_cat_enc)
-    test_X = test_df if include_categoricals else drop_categoricals(test_df)
+@dataclass
+class TrainDataPrepOutputs:
+    train_data: TrainData
+    categorical_encoders: CategoricalEncoders
 
-    return test_X
+
+@dataclass
+class TrainDataPrepInputs:
+    train_df: pd.DataFrame
+    ohe_bool: bool
+    target_variable: str
+    include_categoricals: bool
+
+    def train_data_prep(self) -> TrainDataPrepOutputs:
+        train_df = eda_clean(self.train_df)
+        train_df, _ = clean_after_eda(train_df)
+        ord_enc = ordinal_encode(train_df)
+        train_df = ordinal_transform(train_df, ord_enc)
+        cat_enc = categorical_encoder(train_df, self.ohe_bool)
+        train_df = categorical_transform(train_df, cat_enc)
+        train_data = split_x_y(train_df, self.target_variable)
+        train_data.X = train_data.X if self.include_categoricals else drop_categoricals(train_data.X)
+        categorical_encoders = CategoricalEncoders(ord_enc, cat_enc)
+
+        return TrainDataPrepOutputs(train_data, categorical_encoders)
+
+
+@dataclass
+class TestDataPrepInputs:
+    test_df: pd.DataFrame
+    categorical_encoders: CategoricalEncoders
+    include_categoricals: bool
+
+    def test_data_prep(self) -> pd.DataFrame:
+        test_df = eda_clean(self.test_df)
+        test_df, _ = clean_after_eda(test_df)
+        test_df = ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
+        test_df = categorical_transform(test_df, self.categorical_encoders.categorical_encoder)
+        test_X = test_df if self.include_categoricals else drop_categoricals(test_df)
+
+        return test_X
+
+
+
+
 
 
 
@@ -227,7 +254,7 @@ def categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncode
     return df
 
 
-def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> tuple[pd.DataFrame, pd.Series]:
+def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> TrainData:
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
@@ -242,7 +269,7 @@ def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> tuple[pd.Dat
     # The metric of interest is log transformed RMSE
     y = np.log(df[target_variable])
 
-    return X, y
+    return TrainData(X, y)
 
 
 def drop_categoricals(df: pd.DataFrame) -> pd.DataFrame:
