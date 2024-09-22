@@ -107,13 +107,9 @@ class TestDataPrepInputs:
 
     def test_data_prep(self) -> pd.DataFrame:
         test_df = eda_clean(self.test_df)
-        print(test_df.dtypes)
         test_df, _ = clean_after_eda(test_df)
-        print(test_df.dtypes)
         test_df = ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
-        print(test_df.dtypes)
         test_df = categorical_transform(test_df, self.categorical_encoders.categorical_encoder)
-        print(test_df.dtypes)
         test_X = test_df if self.include_categoricals else drop_categoricals(test_df)
 
         return test_X
