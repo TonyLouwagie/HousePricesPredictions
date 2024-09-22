@@ -45,36 +45,36 @@ def main():
     ridge = linear_model.Ridge()
     br = linear_model.BayesianRidge()
 
-
     # 1. read in training data, perform data prep
     train_df = data_prep.load_data(train_filepath)
-    train_X, train_y, ord_enc, cat_enc = data_prep.train_data_prep(train_df, ohe_bool, target_variable, include_categoricals)
+    train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable, include_categoricals)
+    train_data_prep_outputs = data_prep.train_data_prep(train_data_prep_inputs)
 
 
     # 2. Measure performance of all of our different models
-    lr.fit(train_X, train_y)
-    lr_param_scores = cross_validation.save_model_performance_parameters(lr, train_X, train_y, folds, ord_enc, cat_enc)
+    lr.fit(train_data_prep_outputs.train_data.train_X, train_data_prep_outputs.train_data.train_y)
+    lr_param_scores = cross_validation.save_model_performance_parameters(lr, folds, train_data_prep_outputs)
 
-    en.fit(train_X, train_y)
-    en_param_scores = cross_validation.save_model_performance_parameters(en, train_X, train_y, folds, ord_enc, cat_enc)
+    en.fit(train_data_prep_outputs.train_data.train_X, train_data_prep_outputs.train_data.train_y)
+    en_param_scores = cross_validation.save_model_performance_parameters(en, folds, train_data_prep_outputs)
 
-    lasso.fit(train_X, train_y)
-    lasso_param_scores = cross_validation.save_model_performance_parameters(lasso, train_X, train_y, folds, ord_enc,
-                                                                            cat_enc)
-    ridge.fit(train_X, train_y)
-    ridge_param_scores = cross_validation.save_model_performance_parameters(ridge, train_X, train_y, folds, ord_enc,
-                                                                            cat_enc)
-    br.fit(train_X, train_y)
-    br_param_scores = cross_validation.save_model_performance_parameters(br, train_X, train_y, folds, ord_enc, cat_enc)
+    lasso.fit(train_data_prep_outputs.train_data.train_X, train_data_prep_outputs.train_data.train_y)
+    lasso_param_scores = cross_validation.save_model_performance_parameters(lasso, folds, train_data_prep_outputs)
 
-    rf = cross_validation.bayes_cross_validation(rf, train_X, train_y, rf_param_grid, n_iter)
-    rf_param_scores = cross_validation.save_model_performance_parameters(rf, train_X, train_y, folds, ord_enc, cat_enc)
+    ridge.fit(train_data_prep_outputs.train_data.train_X, train_data_prep_outputs.train_data.train_y)
+    ridge_param_scores = cross_validation.save_model_performance_parameters(ridge, folds, train_data_prep_outputs)
 
-    xgb = cross_validation.bayes_cross_validation(xgb, train_X, train_y, xgb_param_grid, n_iter)
-    xgb_param_scores = cross_validation.save_model_performance_parameters(xgb, train_X, train_y, folds, ord_enc, cat_enc)
+    br.fit(train_data_prep_outputs.train_data.train_X, train_data_prep_outputs.train_data.train_y)
+    br_param_scores = cross_validation.save_model_performance_parameters(br, folds, train_data_prep_outputs)
 
-    lgbm = cross_validation.bayes_cross_validation(lgbm, train_X, train_y, lgbm_param_grid, n_iter)
-    lgbm_param_scores = cross_validation.save_model_performance_parameters(lgbm, train_X, train_y, folds, ord_enc, cat_enc)
+    rf = cross_validation.bayes_cross_validation(rf, train_data_prep_outputs.train_data, rf_param_grid, n_iter)
+    rf_param_scores = cross_validation.save_model_performance_parameters(rf, folds, train_data_prep_outputs)
+
+    xgb = cross_validation.bayes_cross_validation(xgb, train_data_prep_outputs.train_data, xgb_param_grid, n_iter)
+    xgb_param_scores = cross_validation.save_model_performance_parameters(xgb, folds, train_data_prep_outputs)
+
+    lgbm = cross_validation.bayes_cross_validation(lgbm, train_data_prep_outputs.train_data, lgbm_param_grid, n_iter)
+    lgbm_param_scores = cross_validation.save_model_performance_parameters(lgbm, folds, train_data_prep_outputs)
 
     # 3. Compare performance and select best model
     models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores,
@@ -91,7 +91,9 @@ def main():
 
     # 4. Read in test data and apply data prep from step 1
     test_df = data_prep.load_data(test_filepath)
-    test_X = data_prep.test_data_prep(test_df, champ_ord_enc, champ_cat_enc, include_categoricals)
+    champ_categorical_encoders = data_prep.CategoricalEncoders(champ_cat_enc, champ_ord_enc)
+    test_data_prep_inputs = data_prep.TestDataPrepInputs(test_df, champ_categorical_encoders, include_categoricals)
+    test_X = data_prep.test_data_prep(test_data_prep_inputs)
 
     # 5. predict test data and output to csv
     # the model was trained against log transformed target. Invert log for predictions
