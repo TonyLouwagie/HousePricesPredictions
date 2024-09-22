@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.model_selection import cross_val_score # type: ignore
 from skopt import BayesSearchCV # type: ignore
 
-from predict_prices.data_prep import TrainDataPrepOutputs, TrainData
+from data_prep import TrainDataPrepOutputs, TrainData
 
 
 def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> dict[str, float]:
@@ -58,6 +58,6 @@ def bayes_cross_validation(model, train_data: TrainData, param_grid: dict, n_ite
                          n_jobs=4,
                          n_iter=n_iter,
                          random_state=42)
-    best.fit(train_data.to_X_y())
+    best.fit(train_data.X, train_data.y)
 
     return best

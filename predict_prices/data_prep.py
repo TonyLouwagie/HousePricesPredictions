@@ -61,20 +61,9 @@ def load_data(filepath: str) -> pd.DataFrame:
 
 
 @dataclass
-class TrainDataPrepInputs:
-    train_df: pd.DataFrame
-    ohe_bool: bool
-    target_variable: str
-    include_categoricals: bool
-
-
-@dataclass
 class TrainData:
     X: pd.DataFrame
     y: pd.Series
-
-    def to_X_y(self) -> (pd.DataFrame, pd.Series):
-        return self.X, self.y
 
 
 @dataclass
@@ -83,26 +72,31 @@ class CategoricalEncoders:
     ordinal_encoder: preprocessing.OrdinalEncoder
     categorical_encoder: preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder
 
-
 @dataclass
 class TrainDataPrepOutputs:
     train_data: TrainData
     categorical_encoders: CategoricalEncoders
 
 
-def train_data_prep(train_data_prep_inputs: TrainDataPrepInputs) -> TrainDataPrepOutputs:
+@dataclass
+class TrainDataPrepInputs:
+    train_df: pd.DataFrame
+    ohe_bool: bool
+    target_variable: str
+    include_categoricals: bool
 
-    train_df = eda_clean(train_data_prep_inputs.train_df)
-    train_df, _ = clean_after_eda(train_df)
-    ord_enc = ordinal_encode(train_df)
-    train_df = ordinal_transform(train_df, ord_enc)
-    cat_enc = categorical_encoder(train_df, train_data_prep_inputs.ohe_bool)
-    train_df = categorical_transform(train_df, cat_enc)
-    train_data = split_x_y(train_df, train_data_prep_inputs.target_variable)
-    train_data.train_X = train_data.train_X if train_data_prep_inputs.include_categoricals else drop_categoricals(train_data.train_X)
-    categorical_encoders = CategoricalEncoders(ord_enc, cat_enc)
+    def train_data_prep(self) -> TrainDataPrepOutputs:
+        train_df = eda_clean(self.train_df)
+        train_df, _ = clean_after_eda(train_df)
+        ord_enc = ordinal_encode(train_df)
+        train_df = ordinal_transform(train_df, ord_enc)
+        cat_enc = categorical_encoder(train_df, self.ohe_bool)
+        train_df = categorical_transform(train_df, cat_enc)
+        train_data = split_x_y(train_df, self.target_variable)
+        train_data.X = train_data.X if self.include_categoricals else drop_categoricals(train_data.X)
+        categorical_encoders = CategoricalEncoders(ord_enc, cat_enc)
 
-    return TrainDataPrepOutputs(train_data, categorical_encoders)
+        return TrainDataPrepOutputs(train_data, categorical_encoders)
 
 
 @dataclass
@@ -111,19 +105,22 @@ class TestDataPrepInputs:
     categorical_encoders: CategoricalEncoders
     include_categoricals: bool
 
+    def test_data_prep(self) -> pd.DataFrame:
+        test_df = eda_clean(self.test_df)
+        print(test_df.dtypes)
+        test_df, _ = clean_after_eda(test_df)
+        print(test_df.dtypes)
+        test_df = ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
+        print(test_df.dtypes)
+        test_df = categorical_transform(test_df, self.categorical_encoders.categorical_encoder)
+        print(test_df.dtypes)
+        test_X = test_df if self.include_categoricals else drop_categoricals(test_df)
+
+        return test_X
 
 
-def test_data_prep(
-        test_data_prep_inputs: TestDataPrepInputs
-) -> pd.DataFrame:
 
-    test_df = eda_clean(test_data_prep_inputs.test_df)
-    test_df, _ = clean_after_eda(test_df)
-    test_df = ordinal_transform(test_df, test_data_prep_inputs.categorical_encoders.ordinal_encoder)
-    test_df = categorical_transform(test_df, test_data_prep_inputs.categorical_encoders.categorical_encoder)
-    test_X = test_df if test_data_prep_inputs.include_categoricals else drop_categoricals(test_df)
 
-    return test_X
 
 
 

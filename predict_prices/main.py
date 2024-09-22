@@ -15,24 +15,24 @@ def main():
     # temporary variable to remove categoricals
     include_categoricals = False
     # number of folds to cross-validate across
-    folds = 4
+    folds = 2
     # model to cross validate
     lr = linear_model.LinearRegression()
     ohe_bool = False
-    n_iter = 20
+    n_iter = 2
 
-    # Initialize all model types
-    rf = ensemble.RandomForestRegressor()
-    rf_param_grid = {
-        "n_estimators": tuple(range(10, 1000)),
-        "min_samples_split": tuple(range(2, 10)),
-        "min_samples_leaf": tuple(range(1, 10))
-    }
-
-    xgb = xgboost.XGBRegressor()
-    xgb_param_grid = {
-        "booster": ['gbtree', 'gblinear']
-    }
+    # # Initialize all model types
+    # rf = ensemble.RandomForestRegressor()
+    # rf_param_grid = {
+    #     "n_estimators": tuple(range(10, 1000)),
+    #     "min_samples_split": tuple(range(2, 10)),
+    #     "min_samples_leaf": tuple(range(1, 10))
+    # }
+    #
+    # xgb = xgboost.XGBRegressor()
+    # xgb_param_grid = {
+    #     "booster": ['gbtree', 'gblinear']
+    # }
 
     lgbm = lightgbm.LGBMRegressor(verbose=-1)
     lgbm_param_grid = {
@@ -40,45 +40,45 @@ def main():
         'num_leaves': tuple(range(1, 100000, 100))
     }
 
-    en = linear_model.ElasticNet()
-    lasso = linear_model.Lasso()
-    ridge = linear_model.Ridge()
-    br = linear_model.BayesianRidge()
+    # en = linear_model.ElasticNet()
+    # lasso = linear_model.Lasso()
+    # ridge = linear_model.Ridge()
+    # br = linear_model.BayesianRidge()
 
     # 1. read in training data, perform data prep
     train_df = data_prep.load_data(train_filepath)
     train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable, include_categoricals)
-    train_data_prep_outputs = data_prep.train_data_prep(train_data_prep_inputs)
-
+    train_data_prep_outputs = train_data_prep_inputs.train_data_prep()
 
     # 2. Measure performance of all of our different models
-    lr.fit(train_data_prep_outputs.train_data.to_X_y())
-    lr_param_scores = cross_validation.save_model_performance_parameters(lr, folds, train_data_prep_outputs)
+    # lr.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    # lr_param_scores = cross_validation.save_model_performance_parameters(lr, folds, train_data_prep_outputs)
 
-    en.fit(train_data_prep_outputs.train_data.to_X_y())
-    en_param_scores = cross_validation.save_model_performance_parameters(en, folds, train_data_prep_outputs)
-
-    lasso.fit(train_data_prep_outputs.train_data.to_X_y())
-    lasso_param_scores = cross_validation.save_model_performance_parameters(lasso, folds, train_data_prep_outputs)
-
-    ridge.fit(train_data_prep_outputs.train_data.to_X_y())
-    ridge_param_scores = cross_validation.save_model_performance_parameters(ridge, folds, train_data_prep_outputs)
-
-    br.fit(train_data_prep_outputs.train_data.to_X_y())
-    br_param_scores = cross_validation.save_model_performance_parameters(br, folds, train_data_prep_outputs)
-
-    rf = cross_validation.bayes_cross_validation(rf, train_data_prep_outputs.train_data, rf_param_grid, n_iter)
-    rf_param_scores = cross_validation.save_model_performance_parameters(rf, folds, train_data_prep_outputs)
-
-    xgb = cross_validation.bayes_cross_validation(xgb, train_data_prep_outputs.train_data, xgb_param_grid, n_iter)
-    xgb_param_scores = cross_validation.save_model_performance_parameters(xgb, folds, train_data_prep_outputs)
+    # en.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    # en_param_scores = cross_validation.save_model_performance_parameters(en, folds, train_data_prep_outputs)
+    #
+    # lasso.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    # lasso_param_scores = cross_validation.save_model_performance_parameters(lasso, folds, train_data_prep_outputs)
+    #
+    # ridge.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    # ridge_param_scores = cross_validation.save_model_performance_parameters(ridge, folds, train_data_prep_outputs)
+    #
+    # br.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    # br_param_scores = cross_validation.save_model_performance_parameters(br, folds, train_data_prep_outputs)
+    #
+    # rf = cross_validation.bayes_cross_validation(rf, train_data_prep_outputs.train_data, rf_param_grid, n_iter)
+    # rf_param_scores = cross_validation.save_model_performance_parameters(rf, folds, train_data_prep_outputs)
+    #
+    # xgb = cross_validation.bayes_cross_validation(xgb, train_data_prep_outputs.train_data, xgb_param_grid, n_iter)
+    # xgb_param_scores = cross_validation.save_model_performance_parameters(xgb, folds, train_data_prep_outputs)
 
     lgbm = cross_validation.bayes_cross_validation(lgbm, train_data_prep_outputs.train_data, lgbm_param_grid, n_iter)
     lgbm_param_scores = cross_validation.save_model_performance_parameters(lgbm, folds, train_data_prep_outputs)
 
     # 3. Compare performance and select best model
-    models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores,
-              ridge_param_scores, br_param_scores]
+    # models = [lr_param_scores, rf_param_scores, xgb_param_scores, lgbm_param_scores, en_param_scores, lasso_param_scores,
+    #           ridge_param_scores, br_param_scores]
+    models = [lgbm_param_scores]
     param_scores = pd.DataFrame(models).sort_values('score', ascending=False)
 
     print(param_scores[['model', 'score', 'standard_dev']])
@@ -93,14 +93,14 @@ def main():
     test_df = data_prep.load_data(test_filepath)
     champ_categorical_encoders = data_prep.CategoricalEncoders(champ_cat_enc, champ_ord_enc)
     test_data_prep_inputs = data_prep.TestDataPrepInputs(test_df, champ_categorical_encoders, include_categoricals)
-    test_X = data_prep.test_data_prep(test_data_prep_inputs)
+    test_X = test_data_prep_inputs.test_data_prep()
 
     # 5. predict test data and output to csv
     # the model was trained against log transformed target. Invert log for predictions
     test_y = np.exp(champ_model.predict(test_X))
     print(test_X.head())
 
-    test_y = pd.DataFrame(test_y, columns=['SalePrice'], index=test_X.index)
+    test_y = pd.DataFrame(test_y, columns=[target_variable], index=test_X.index)
 
     test_y.to_csv('prediction.csv')
 
