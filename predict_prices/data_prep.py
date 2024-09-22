@@ -58,6 +58,41 @@ def load_data(filepath: str) -> pd.DataFrame:
     return pd.read_csv(filepath)
 
 
+def train_data_prep(
+        train_df: pd.DataFrame,
+        ohe_bool: bool,
+        target_variable: str,
+        include_categoricals: bool
+) -> (pd.DataFrame, pd.DataFrame, preprocessing.OrdinalEncoder, preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder):
+    train_df = eda_clean(train_df)
+    train_df, _ = clean_after_eda(train_df)
+    ord_enc = ordinal_encode(train_df)
+    train_df = ordinal_transform(train_df, ord_enc)
+    cat_enc = categorical_encoder(train_df, ohe_bool)
+    train_df = categorical_transform(train_df, cat_enc)
+    train_X, train_y = split_x_y(train_df, target_variable)
+    train_X = train_X if include_categoricals else drop_categoricals(train_X)
+
+    return train_X, train_y, ord_enc, cat_enc
+
+
+def test_data_prep(
+        test_df: pd.DataFrame,
+        champ_ord_enc: preprocessing.OrdinalEncoder,
+        champ_cat_enc: preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder,
+        include_categoricals: bool
+) -> pd.DataFrame:
+
+    test_df = eda_clean(test_df)
+    test_df, _ = clean_after_eda(test_df)
+    test_df = ordinal_transform(test_df, champ_ord_enc)
+    test_df = categorical_transform(test_df, champ_cat_enc)
+    test_X = test_df if include_categoricals else drop_categoricals(test_df)
+
+    return test_X
+
+
+
 def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
     """
         Clean data frame to prepare for eda
