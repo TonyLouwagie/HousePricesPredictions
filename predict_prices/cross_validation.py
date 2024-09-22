@@ -30,7 +30,7 @@ def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> dic
 
 
 def save_model_performance_parameters(model, folds, train_data_prep_outputs: TrainDataPrepOutputs):
-    aggregate_scores = cross_val_aggregate(model, train_data_prep_outputs.train_data.train_X, train_data_prep_outputs.train_data.train_y, folds)
+    aggregate_scores = cross_val_aggregate(model, train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y, folds)
     param_scores = {
         "model": model,
         "ordinal_encoder": train_data_prep_outputs.categorical_encoders.ordinal_encoder,
@@ -58,6 +58,6 @@ def bayes_cross_validation(model, train_data: TrainData, param_grid: dict, n_ite
                          n_jobs=4,
                          n_iter=n_iter,
                          random_state=42)
-    best.fit(train_data.train_y, train_data.train_y)
+    best.fit(train_data.X, train_data.y)
 
     return best

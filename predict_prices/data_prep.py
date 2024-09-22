@@ -70,8 +70,8 @@ class TrainDataPrepInputs:
 
 @dataclass
 class TrainData:
-    train_X: pd.DataFrame
-    train_y: pd.Series
+    X: pd.DataFrame
+    y: pd.Series
 
 
 @dataclass
@@ -95,9 +95,8 @@ def train_data_prep(train_data_prep_inputs: TrainDataPrepInputs) -> TrainDataPre
     train_df = ordinal_transform(train_df, ord_enc)
     cat_enc = categorical_encoder(train_df, train_data_prep_inputs.ohe_bool)
     train_df = categorical_transform(train_df, cat_enc)
-    train_X, train_y = split_x_y(train_df, train_data_prep_inputs.target_variable)
-    train_X = train_X if train_data_prep_inputs.include_categoricals else drop_categoricals(train_X)
-    train_data = TrainData(train_X, train_y)
+    train_data = split_x_y(train_df, train_data_prep_inputs.target_variable)
+    train_data.train_X = train_data.train_X if train_data_prep_inputs.include_categoricals else drop_categoricals(train_data.train_X)
     categorical_encoders = CategoricalEncoders(ord_enc, cat_enc)
 
     return TrainDataPrepOutputs(train_data, categorical_encoders)
@@ -259,7 +258,7 @@ def categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncode
     return df
 
 
-def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> tuple[pd.DataFrame, pd.Series]:
+def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> TrainData:
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
@@ -274,7 +273,7 @@ def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> tuple[pd.Dat
     # The metric of interest is log transformed RMSE
     y = np.log(df[target_variable])
 
-    return X, y
+    return TrainData(X, y)
 
 
 def drop_categoricals(df: pd.DataFrame) -> pd.DataFrame:
