@@ -192,20 +192,20 @@ def categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncode
     return df
 
 
-def split_x_y(df: pd.DataFrame, tgt: str, drop=None) -> tuple[pd.DataFrame, pd.Series]:
+def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> tuple[pd.DataFrame, pd.Series]:
     """
     Split data frame into explanatory variables and target variables
     :param df: data frame containing data to be modeled
-    :param tgt: target variable
+    :param target_variable: target variable
     :param drop: extra columns to drop from dataset
     :return: X: dataframe containing x variables, y: dataframe containing target
     """
 
     if drop is None:
         drop = []
-    X = df.drop([tgt] + drop, axis=1)
+    X = df.drop([target_variable] + drop, axis=1)
     # The metric of interest is log transformed RMSE
-    y = np.log(df[tgt])
+    y = np.log(df[target_variable])
 
     return X, y
 
