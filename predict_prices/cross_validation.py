@@ -58,6 +58,6 @@ def bayes_cross_validation(model, train_data: TrainData, param_grid: dict, n_ite
                          n_jobs=4,
                          n_iter=n_iter,
                          random_state=42)
-    best.fit(train_data.X, train_data.y)
+    best.fit(train_data.to_X_y())
 
     return best

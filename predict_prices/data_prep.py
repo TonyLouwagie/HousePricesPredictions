@@ -73,6 +73,9 @@ class TrainData:
     X: pd.DataFrame
     y: pd.Series
 
+    def to_X_y(self) -> (pd.DataFrame, pd.Series):
+        return self.X, self.y
+
 
 @dataclass
 class CategoricalEncoders:

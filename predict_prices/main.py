@@ -52,19 +52,19 @@ def main():
 
 
     # 2. Measure performance of all of our different models
-    lr.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    lr.fit(train_data_prep_outputs.train_data.to_X_y())
     lr_param_scores = cross_validation.save_model_performance_parameters(lr, folds, train_data_prep_outputs)
 
-    en.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    en.fit(train_data_prep_outputs.train_data.to_X_y())
     en_param_scores = cross_validation.save_model_performance_parameters(en, folds, train_data_prep_outputs)
 
-    lasso.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    lasso.fit(train_data_prep_outputs.train_data.to_X_y())
     lasso_param_scores = cross_validation.save_model_performance_parameters(lasso, folds, train_data_prep_outputs)
 
-    ridge.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    ridge.fit(train_data_prep_outputs.train_data.to_X_y())
     ridge_param_scores = cross_validation.save_model_performance_parameters(ridge, folds, train_data_prep_outputs)
 
-    br.fit(train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y)
+    br.fit(train_data_prep_outputs.train_data.to_X_y())
     br_param_scores = cross_validation.save_model_performance_parameters(br, folds, train_data_prep_outputs)
 
     rf = cross_validation.bayes_cross_validation(rf, train_data_prep_outputs.train_data, rf_param_grid, n_iter)
