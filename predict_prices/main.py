@@ -18,7 +18,7 @@ def main():
     folds = 4
     # model to cross validate
     lr = linear_model.LinearRegression()
-    ohe = False
+    ohe_bool = False
     n_iter = 20
 
     # Initialize all model types
@@ -45,16 +45,11 @@ def main():
     ridge = linear_model.Ridge()
     br = linear_model.BayesianRidge()
 
+
     # 1. read in training data, perform data prep
     train_df = data_prep.load_data(train_filepath)
-    train_df = data_prep.eda_clean(train_df)
-    train_df, _ = data_prep.clean_after_eda(train_df)
-    ord_enc = data_prep.ordinal_encode(train_df)
-    train_df = data_prep.ordinal_transform(train_df, ord_enc)
-    cat_enc = data_prep.categorical_encoder(train_df, ohe)
-    train_df = data_prep.categorical_transform(train_df, cat_enc)
-    train_X, train_y = data_prep.split_x_y(train_df, target_variable)
-    train_X = train_X if include_categoricals else data_prep.drop_categoricals(train_X)
+    train_X, train_y, ord_enc, cat_enc = data_prep.train_data_prep(train_df, ohe_bool, target_variable, include_categoricals)
+
 
     # 2. Measure performance of all of our different models
     lr.fit(train_X, train_y)
@@ -96,11 +91,7 @@ def main():
 
     # 4. Read in test data and apply data prep from step 1
     test_df = data_prep.load_data(test_filepath)
-    test_df = data_prep.eda_clean(test_df)
-    test_df, _ = data_prep.clean_after_eda(test_df)
-    test_df = data_prep.ordinal_transform(test_df, champ_ord_enc)
-    test_df = data_prep.categorical_transform(test_df, champ_cat_enc)
-    test_X = test_df if include_categoricals else data_prep.drop_categoricals(test_df)
+    test_X = data_prep.test_data_prep(test_df, champ_ord_enc, champ_cat_enc, include_categoricals)
 
     # 5. predict test data and output to csv
     # the model was trained against log transformed target. Invert log for predictions
