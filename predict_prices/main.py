@@ -12,7 +12,7 @@ import data_prep
 
 
 @dataclass
-class ChampionModelParameters:
+class ModelParameters:
     model: any
     categorical_encoders: data_prep.CategoricalEncoders
 
@@ -25,7 +25,7 @@ class ModelParameterMap:
             train_data_prep_outputs: data_prep.TrainDataPrepOutputs,
             n_iter: int,
             folds: int
-    ) -> ChampionModelParameters:
+    ) -> ModelParameters:
 
         models = []
 
@@ -55,7 +55,7 @@ class ModelParameterMap:
             champ_ord_enc = champ.ordinal_encoder[0]
             champ_cat_enc = champ.categorical_encoder[0]
 
-            champ_parameters = ChampionModelParameters(champ_model, data_prep.CategoricalEncoders(champ_ord_enc, champ_cat_enc))
+            champ_parameters = ModelParameters(champ_model, data_prep.CategoricalEncoders(champ_ord_enc, champ_cat_enc))
 
         return champ_parameters
 
