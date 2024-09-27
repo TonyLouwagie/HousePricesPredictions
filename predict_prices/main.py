@@ -12,6 +12,11 @@ import data_prep
 
 
 @dataclass
+class ChampionModelParameters:
+    model: any
+    categorical_encoders: data_prep.CategoricalEncoders
+
+@dataclass
 class ModelParameterMap:
     model_params_map: dict[any, dict[str, Iterable]]
 
@@ -20,7 +25,7 @@ class ModelParameterMap:
             train_data_prep_outputs: data_prep.TrainDataPrepOutputs,
             n_iter: int,
             folds: int
-    ) -> list[dict]:
+    ) -> ChampionModelParameters:
 
         models = []
 
@@ -39,7 +44,20 @@ class ModelParameterMap:
 
             models.append(best_model_param_scores)
 
-        return models
+            param_scores = pd.DataFrame(models).sort_values('score', ascending=False)
+
+            print(param_scores[['model', 'score', 'standard_dev']])
+
+            # take only first row in case of ties (I don't care which model if they're tied)
+            champ = param_scores[param_scores.score == param_scores.score.max()].reset_index()
+
+            champ_model = champ.model[0]
+            champ_ord_enc = champ.ordinal_encoder[0]
+            champ_cat_enc = champ.categorical_encoder[0]
+
+            champ_parameters = ChampionModelParameters(champ_model, data_prep.CategoricalEncoders(champ_ord_enc, champ_cat_enc))
+
+        return champ_parameters
 
 
 def main():
@@ -98,26 +116,16 @@ def main():
     train_data_prep_outputs = train_data_prep_inputs.train_data_prep()
 
     # 2. Measure performance of all of our different models
-    models = model_param_map.measure_model_performance(train_data_prep_outputs, n_iter, folds)
-    param_scores = pd.DataFrame(models).sort_values('score', ascending=False)
+    champ_parameters = model_param_map.measure_model_performance(train_data_prep_outputs, n_iter, folds)
 
-    print(param_scores[['model', 'score', 'standard_dev']])
-
-    # take only first row in case of ties (I don't care which model if they're tied)
-    champ = param_scores[param_scores.score == param_scores.score.max()].reset_index()
-    champ_model = champ.model[0]
-    champ_ord_enc = champ.ordinal_encoder[0]
-    champ_cat_enc = champ.categorical_encoder[0]
-
-    # 4. Read in test data and apply data prep from step 1
+    # 3. Read in test data and apply data prep from step 1
     test_df = data_prep.load_data(test_filepath)
-    champ_categorical_encoders = data_prep.CategoricalEncoders(champ_ord_enc, champ_cat_enc)
-    test_data_prep_inputs = data_prep.TestDataPrepInputs(test_df, champ_categorical_encoders, include_categoricals)
+    test_data_prep_inputs = data_prep.TestDataPrepInputs(test_df, champ_parameters.categorical_encoders, include_categoricals)
     test_X = test_data_prep_inputs.test_data_prep()
 
-    # 5. predict test data and output to csv
+    # 4. predict test data and output to csv
     # the model was trained against log transformed target. Invert log for predictions
-    test_y = np.exp(champ_model.predict(test_X))
+    test_y = np.exp(champ_parameters.model.predict(test_X))
     test_y = pd.DataFrame(test_y, columns=[target_variable], index=test_X.index)
     test_y.to_csv('prediction.csv')
 
