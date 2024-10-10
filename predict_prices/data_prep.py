@@ -83,17 +83,18 @@ class TrainDataPrepInputs:
     train_df: pd.DataFrame
     ohe_bool: bool
     target_variable: str
-    include_categoricals: bool
 
     def train_data_prep(self) -> TrainDataPrepOutputs:
-        train_df = eda_clean(self.train_df)
-        train_df, _ = clean_after_eda(train_df)
-        ord_enc = ordinal_encode(train_df)
-        train_df = ordinal_transform(train_df, ord_enc)
-        cat_enc = categorical_encoder(train_df, self.ohe_bool)
-        train_df = categorical_transform(train_df, cat_enc)
-        train_data = split_x_y(train_df, self.target_variable)
-        train_data.X = train_data.X if self.include_categoricals else drop_categoricals(train_data.X)
+        train_df = _eda_clean(self.train_df)
+        train_df, _ = _clean_after_eda(train_df)
+
+        ord_enc = _ordinal_encode(train_df)
+        train_df = _ordinal_transform(train_df, ord_enc)
+
+        cat_enc = _categorical_encoder(train_df, self.ohe_bool)
+        train_df = _categorical_transform(train_df, cat_enc)
+
+        train_data = _split_x_y(train_df, self.target_variable)
         categorical_encoders = CategoricalEncoders(ord_enc, cat_enc)
 
         return TrainDataPrepOutputs(train_data, categorical_encoders)
@@ -103,14 +104,14 @@ class TrainDataPrepInputs:
 class TestDataPrepInputs:
     test_df: pd.DataFrame
     categorical_encoders: CategoricalEncoders
-    include_categoricals: bool
 
     def test_data_prep(self) -> pd.DataFrame:
-        test_df = eda_clean(self.test_df)
-        test_df, _ = clean_after_eda(test_df)
-        test_df = ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
-        test_df = categorical_transform(test_df, self.categorical_encoders.categorical_encoder)
-        test_X = test_df if self.include_categoricals else drop_categoricals(test_df)
+        test_df = _eda_clean(self.test_df)
+        test_df, _ = _clean_after_eda(test_df)
+
+        test_df = _ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
+
+        test_X = _categorical_transform(test_df, self.categorical_encoders.categorical_encoder)
 
         return test_X
 
@@ -120,12 +121,10 @@ class TestDataPrepInputs:
 
 
 
-def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
+def _eda_clean(df: pd.DataFrame) -> pd.DataFrame:
     """
-        Clean data frame to prepare for eda
-        :param df: raw dataframe
-        :return: df: cleaned dataframe
-        """
+    Clean data frame to prepare for eda
+    """
     # Some numeric columns should be treated as categorical
     df["MSSubClass"] = df.MSSubClass.astype(str)
 
@@ -133,9 +132,9 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
     # Also make these columns categorical rather than strings so that we can order the ordinal categoricals
     objects = df.select_dtypes(include=object).columns
     df[objects] = df[objects].apply(
-        lambda col: pd.Categorical(convert_na_to_string(col), categories=_ORDERED_CATEGORICALS[col.name],
+        lambda col: pd.Categorical(_convert_na_to_string(col), categories=_ORDERED_CATEGORICALS[col.name],
                                    ordered=True) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(
-            convert_na_to_string(col))
+            _convert_na_to_string(col))
     )
 
     # ID is unique for each row so it should not be categorical
@@ -155,11 +154,11 @@ def eda_clean(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def convert_na_to_string(col):
+def _convert_na_to_string(col):
     return np.where(col.isna(), 'NA', col)
 
 
-def clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
+def _clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
     """
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
@@ -185,11 +184,9 @@ def clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
     return df, imputer
 
 
-def ordinal_encode(df: pd.DataFrame) -> preprocessing.OrdinalEncoder:
+def _ordinal_encode(df: pd.DataFrame) -> preprocessing.OrdinalEncoder:
     """
     fit ordinal encoder for ordinal categorical variables
-    :param df:
-    :return: dataframe with ordinal encoding of ordinal categorical variables
     """
     enc = preprocessing.OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
 
@@ -200,12 +197,9 @@ def ordinal_encode(df: pd.DataFrame) -> preprocessing.OrdinalEncoder:
     return enc
 
 
-def ordinal_transform(df: pd.DataFrame, enc: preprocessing.OrdinalEncoder):
+def _ordinal_transform(df: pd.DataFrame, enc: preprocessing.OrdinalEncoder) -> pd.DataFrame:
     """
     use fit ordinal encoder to transform ordinal columns
-    :param df:
-    :param enc: OrdinalEncoder
-    :return:
     """
     ordinals = list(_ORDERED_CATEGORICALS.keys())
     df[ordinals] = enc.transform(df[ordinals])
@@ -213,12 +207,9 @@ def ordinal_transform(df: pd.DataFrame, enc: preprocessing.OrdinalEncoder):
     return df
 
 
-def categorical_encoder(df: pd.DataFrame, ohe: bool) -> preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder:
+def _categorical_encoder(df: pd.DataFrame, ohe: bool) -> (preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder):
     """
     Categorical encoding for non-ordinal categorical variables
-    :param df:
-    :param ohe: boolean, if true use one hot encoder else use ordinal encoder
-    :return: df
     """
     categorical_columns = df.select_dtypes(include='category').columns
     if ohe:
@@ -232,12 +223,9 @@ def categorical_encoder(df: pd.DataFrame, ohe: bool) -> preprocessing.OneHotEnco
     return cat_enc
 
 
-def categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder) -> pd.DataFrame:
+def _categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder) -> pd.DataFrame:
     """
     Use fit categorical encoder to transform dataset
-    :param df:
-    :param cat_enc: Can be OrdinalEncoder or OneHotEncoder
-    :return: df
     """
     categorical_columns = df.select_dtypes(include='category').columns
 
@@ -254,13 +242,9 @@ def categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncode
     return df
 
 
-def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> TrainData:
+def _split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> TrainData:
     """
     Split data frame into explanatory variables and target variables
-    :param df: data frame containing data to be modeled
-    :param target_variable: target variable
-    :param drop: extra columns to drop from dataset
-    :return: X: dataframe containing x variables, y: dataframe containing target
     """
 
     if drop is None:
@@ -270,14 +254,3 @@ def split_x_y(df: pd.DataFrame, target_variable: str, drop=None) -> TrainData:
     y = np.log(df[target_variable])
 
     return TrainData(X, y)
-
-
-def drop_categoricals(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    drop any categorical columns from DF. We want this option because many model types can't handle categoricals
-    :param df:
-    :return: df
-    """
-    df = df.select_dtypes(include=[int, float])
-
-    return df
