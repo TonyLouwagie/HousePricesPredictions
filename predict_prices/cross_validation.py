@@ -6,7 +6,7 @@ from skopt import BayesSearchCV # type: ignore
 from data_prep import TrainDataPrepOutputs, TrainData
 
 
-def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> dict[str, float]:
+def _cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> dict[str, float]:
     """
     Run cross validation and aggregate scores on one model
     :param model: the model to score
@@ -30,7 +30,7 @@ def cross_val_aggregate(model, X: pd.DataFrame, y: pd.Series, folds: int) -> dic
 
 
 def save_model_performance_parameters(model, folds, train_data_prep_outputs: TrainDataPrepOutputs):
-    aggregate_scores = cross_val_aggregate(model, train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y, folds)
+    aggregate_scores = _cross_val_aggregate(model, train_data_prep_outputs.train_data.X, train_data_prep_outputs.train_data.y, folds)
     param_scores = {
         "model": model,
         "ordinal_encoder": train_data_prep_outputs.categorical_encoders.ordinal_encoder,

@@ -17,8 +17,8 @@ class ModelParameters:
     categorical_encoders: data_prep.CategoricalEncoders
 
 @dataclass
-class ModelParameterMap:
-    model_params_map: dict[any, dict[str, Iterable]]
+class ModelHyperparameterMap:
+    hyper_params_map: dict[any, dict[str, Iterable]]
 
     def measure_model_performance(
             self,
@@ -29,8 +29,8 @@ class ModelParameterMap:
 
         models = []
 
-        for i in self.model_params_map:
-            param_grid = self.model_params_map[i]
+        for i in self.hyper_params_map:
+            param_grid = self.hyper_params_map[i]
 
             if len(param_grid) > 0:
                 best_model = cross_validation.bayes_cross_validation(i, train_data_prep_outputs.train_data, param_grid,
@@ -44,18 +44,18 @@ class ModelParameterMap:
 
             models.append(best_model_param_scores)
 
-            param_scores = pd.DataFrame(models).sort_values('score', ascending=False)
+        param_scores = pd.DataFrame(models).sort_values('score', ascending=False)
 
-            print(param_scores[['model', 'score', 'standard_dev']])
+        print(param_scores[['model', 'score', 'standard_dev']])
 
-            # take only first row in case of ties (I don't care which model if they're tied)
-            champ = param_scores[param_scores.score == param_scores.score.max()].reset_index()
+        # take only first row in case of ties (I don't care which model if they're tied)
+        champ = param_scores[param_scores.score == param_scores.score.max()].reset_index()
 
-            champ_model = champ.model[0]
-            champ_ord_enc = champ.ordinal_encoder[0]
-            champ_cat_enc = champ.categorical_encoder[0]
+        champ_model = champ.model[0]
+        champ_ord_enc = champ.ordinal_encoder[0]
+        champ_cat_enc = champ.categorical_encoder[0]
 
-            champ_parameters = ModelParameters(champ_model, data_prep.CategoricalEncoders(champ_ord_enc, champ_cat_enc))
+        champ_parameters = ModelParameters(champ_model, data_prep.CategoricalEncoders(champ_ord_enc, champ_cat_enc))
 
         return champ_parameters
 
@@ -65,8 +65,7 @@ def main():
     test_filepath = "predict_prices/data/test.csv"
 
     target_variable = 'SalePrice'
-    # temporary variable to remove categoricals
-    include_categoricals = False
+
     # number of folds to cross-validate across
     folds = 4
     # model to cross validate
@@ -99,6 +98,7 @@ def main():
     br = linear_model.BayesianRidge()
 
     model_dict = {
+        # TODO: Why wouldn't I convert these empty lists to empty dictionaries?
         lr: [],
         en: [],
         lasso: [],
@@ -108,25 +108,29 @@ def main():
         xgb: xgb_param_grid,
         lgbm: lgbm_param_grid
     }
-    model_param_map = ModelParameterMap(model_dict)
+    hyper_param_map = ModelHyperparameterMap(model_dict)
 
-    # 1. read in training data, perform data prep
+    #1. read in train and test data
     train_df = data_prep.load_data(train_filepath)
-    train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable, include_categoricals)
+    test_df = data_prep.load_data(test_filepath)
+
+    # 2. perform data prep on training data
+    train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable)
     train_data_prep_outputs = train_data_prep_inputs.train_data_prep()
 
-    # 2. Measure performance of all of our different models
-    champ_parameters = model_param_map.measure_model_performance(train_data_prep_outputs, n_iter, folds)
+    # 3. Measure performance of all of our different models
+    champ_parameters = hyper_param_map.measure_model_performance(train_data_prep_outputs, n_iter, folds)
 
-    # 3. Read in test data and apply data prep from step 1
-    test_df = data_prep.load_data(test_filepath)
-    test_data_prep_inputs = data_prep.TestDataPrepInputs(test_df, champ_parameters.categorical_encoders, include_categoricals)
+    # 4. apply data prep from training to test data
+    test_data_prep_inputs = data_prep.TestDataPrepInputs(test_df, champ_parameters.categorical_encoders)
     test_X = test_data_prep_inputs.test_data_prep()
 
-    # 4. predict test data and output to csv
+    # 5. predict test data
     # the model was trained against log transformed target. Invert log for predictions
     test_y = np.exp(champ_parameters.model.predict(test_X))
     test_y = pd.DataFrame(test_y, columns=[target_variable], index=test_X.index)
+
+    # 6. output predictions to csv
     test_y.to_csv('prediction.csv')
 
 
