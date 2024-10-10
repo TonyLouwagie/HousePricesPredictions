@@ -215,7 +215,6 @@ def _categorical_encoder(df: pd.DataFrame, ohe: bool) -> (preprocessing.OneHotEn
     if ohe:
         cat_enc = preprocessing.OneHotEncoder(sparse_output=False, handle_unknown='ignore')
         cat_enc.fit(df[categorical_columns])
-
     else:
         cat_enc = preprocessing.OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
         cat_enc.fit(df[categorical_columns])
