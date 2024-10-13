@@ -15,13 +15,15 @@ class PurePipeline:
     model_hyperparameter_map: ModelHyperparameterMap
     train_data_prep_inputs: data_prep.TrainDataPrepInputs
     test_df: pd.DataFrame
+    n_iter: int
+    folds: int
 
     def run(self):
         # 1. perform data prep on training data
         train_data_prep_outputs = self.train_data_prep_inputs.train_data_prep()
 
         # 2. Measure performance of all of our different models
-        champ_parameters = self.model_hyperparameter_map.measure_model_performance(train_data_prep_outputs, n_iter, folds)
+        champ_parameters = self.model_hyperparameter_map.measure_model_performance(train_data_prep_outputs, self.n_iter, self.folds)
 
         # 3. apply data prep from training to test data
         test_data_prep_inputs = data_prep.TestDataPrepInputs(self.test_df, champ_parameters.categorical_encoders)
@@ -88,8 +90,8 @@ def main():
     # 1. read in train and test data
     train_df = data_prep.load_data(train_filepath)
     test_df = data_prep.load_data(test_filepath)
-    train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool)
-    pure_pipeline_inputs = PurePipeline(hyper_param_map,train_data_prep_inputs, test_df)
+    train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable)
+    pure_pipeline_inputs = PurePipeline(hyper_param_map,train_data_prep_inputs, test_df, n_iter, folds)
 
     # 2. run pure pipeline
     test_y = pure_pipeline_inputs.run()
