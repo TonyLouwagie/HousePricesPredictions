@@ -7,7 +7,7 @@ from sklearn import ensemble, linear_model  # type: ignore
 import xgboost
 
 import data_prep
-from predict_prices.hyperparameter_tuning import ModelHyperparameterMap
+from hyperparameter_tuning import ModelHyperparameterMap
 
 
 @dataclass
