@@ -3,7 +3,8 @@ from typing import Iterable
 
 import pandas as pd
 
-from predict_prices import data_prep, cross_validation
+import data_prep
+import cross_validation
 
 
 @dataclass
