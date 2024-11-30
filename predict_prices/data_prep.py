@@ -79,7 +79,7 @@ class TrainDataPrepInputs:
 
     def train_data_prep(self) -> TrainDataPrepOutputs:
         train_df = _eda_clean(self.train_data.df)
-        train_df, _ = _clean_after_eda(train_df)
+        train_df = _clean_after_eda(train_df)
 
         ord_enc = _ordinal_encode(train_df)
         train_df = _ordinal_transform(train_df, ord_enc)
@@ -100,7 +100,7 @@ class TestDataPrepInputs:
 
     def test_data_prep(self) -> pd.DataFrame:
         test_df = _eda_clean(self.test_df.df)
-        test_df, _ = _clean_after_eda(test_df)
+        test_df = _clean_after_eda(test_df)
 
         test_df = _ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
 
@@ -147,9 +147,8 @@ def _convert_na_to_string(col):
     return np.where(col.isna(), 'NA', col)
 
 
-def _clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
+def _clean_after_eda(df: pd.DataFrame) -> pd.DataFrame:
     """
-    TODO: remove imputer from return
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
     :param df: pandas dataframe with ID column
@@ -171,7 +170,7 @@ def _clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]
     cols = df.columns
     df = pd.merge(df_obj, df_numeric_impute, left_index=True, right_index=True)[cols]
 
-    return df, imputer
+    return df
 
 
 def _ordinal_encode(df: pd.DataFrame) -> preprocessing.OrdinalEncoder:
