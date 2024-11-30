@@ -149,6 +149,7 @@ def _convert_na_to_string(col):
 
 def _clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
     """
+    TODO: remove imputer from return
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
     :param df: pandas dataframe with ID column
@@ -196,6 +197,7 @@ def _ordinal_transform(df: pd.DataFrame, enc: preprocessing.OrdinalEncoder) -> p
     return df
 
 
+# TODO: Create an enum class that is OneHotEncoder or OrdinalEncoder only. Return that class here.
 def _categorical_encoder(df: pd.DataFrame, ohe: bool) -> (preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder):
     """
     Categorical encoding for non-ordinal categorical variables
