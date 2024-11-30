@@ -85,7 +85,9 @@ _DTYPE_DICT = {
     "SaleType": str,
     "SaleCondition": str,
 }
+
 _TARGET_DTYPE = {"SalePrice": int}
+
 _RAW_FEATURES = {
     "Id": pa.Column(int),
     "MSSubClass": pa.Column(int),
