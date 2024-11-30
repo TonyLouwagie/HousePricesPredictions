@@ -27,7 +27,7 @@ class PurePipeline:
         champ_parameters = self.model_hyperparameter_map.measure_model_performance(train_data_prep_outputs, self.n_iter, self.folds)
 
         # 3. apply data prep from training to test data
-        test_data_prep_inputs = data_prep.TestDataPrepInputs(self.testing_data.df, champ_parameters.categorical_encoders)
+        test_data_prep_inputs = data_prep.TestDataPrepInputs(self.testing_data, champ_parameters.categorical_encoders)
         test_X = test_data_prep_inputs.test_data_prep()
 
         # 4. predict test data

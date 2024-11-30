@@ -302,11 +302,11 @@ class TrainDataPrepInputs:
 
 @dataclass
 class TestDataPrepInputs:
-    test_df: pd.DataFrame
+    test_df: RawTestingData
     categorical_encoders: CategoricalEncoders
 
     def test_data_prep(self) -> pd.DataFrame:
-        test_df = _eda_clean(self.test_df)
+        test_df = _eda_clean(self.test_df.df)
         test_df, _ = _clean_after_eda(test_df)
 
         test_df = _ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
@@ -418,8 +418,10 @@ def _categorical_encoder(df: pd.DataFrame, ohe: bool) -> (preprocessing.OneHotEn
     return cat_enc
 
 
-def _categorical_transform(df: pd.DataFrame,
-                           cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder) -> pd.DataFrame:
+def _categorical_transform(
+        df: pd.DataFrame,
+        cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder
+) -> pd.DataFrame:
     """
     Use fit categorical encoder to transform dataset
     """
