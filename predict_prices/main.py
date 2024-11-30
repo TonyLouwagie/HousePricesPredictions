@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn import ensemble, linear_model  # type: ignore
 import xgboost
 
+import data_load
 import data_prep
 from hyperparameter_tuning import ModelHyperparameterMap
 
@@ -14,7 +15,7 @@ from hyperparameter_tuning import ModelHyperparameterMap
 class PurePipeline:
     model_hyperparameter_map: ModelHyperparameterMap
     train_data_prep_inputs: data_prep.TrainDataPrepInputs
-    test_df: pd.DataFrame
+    testing_data: data_load.RawTestingData
     n_iter: int
     folds: int
 
@@ -26,7 +27,7 @@ class PurePipeline:
         champ_parameters = self.model_hyperparameter_map.measure_model_performance(train_data_prep_outputs, self.n_iter, self.folds)
 
         # 3. apply data prep from training to test data
-        test_data_prep_inputs = data_prep.TestDataPrepInputs(self.test_df, champ_parameters.categorical_encoders)
+        test_data_prep_inputs = data_prep.TestDataPrepInputs(self.testing_data, champ_parameters.categorical_encoders)
         test_X = test_data_prep_inputs.test_data_prep()
 
         # 4. predict test data
@@ -88,8 +89,9 @@ def main():
     hyper_param_map = ModelHyperparameterMap(model_dict)
 
     # 1. read in train and test data
-    train_df = data_prep.load_data(train_filepath)
-    test_df = data_prep.load_data(test_filepath)
+    train_df = data_load.load_training_data(train_filepath)
+
+    test_df = data_load.load_testing_data(test_filepath)
     train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable)
     pure_pipeline_inputs = PurePipeline(hyper_param_map,train_data_prep_inputs, test_df, n_iter, folds)
 

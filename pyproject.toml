@@ -19,6 +19,7 @@ mypy = "^1.11.1"
 pytest = "^8.2.2"
 black = "^24.4.2"
 jupyterlab = "^4.2.5"
+pandera = "^0.21.0"
 
 
 [tool.poetry.group.eda.dependencies]

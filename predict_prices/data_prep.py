@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn import impute, preprocessing  # type: ignore
 
+from data_load import RawTrainData, RawTestingData
+
 _LOT_SHAPE = ['Reg', 'IR1', 'IR2', 'IR3', 'NA']
 _UTILITIES = ['AllPub', 'NoSewr', 'NoSeWa', 'ELO', 'NA']
 _LAND_SLOPE = ['Gtl', 'Mod', 'Sev', 'NA']
@@ -50,16 +52,6 @@ _ORDERED_CATEGORICALS = {
 }
 
 
-def load_data(filepath: str) -> pd.DataFrame:
-    """
-    read csv into dataframe
-    :param filepath: path to csv that should be loaded
-    :return: df
-    """
-
-    return pd.read_csv(filepath)
-
-
 @dataclass
 class TrainData:
     X: pd.DataFrame
@@ -72,6 +64,7 @@ class CategoricalEncoders:
     ordinal_encoder: preprocessing.OrdinalEncoder
     categorical_encoder: preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder
 
+
 @dataclass
 class TrainDataPrepOutputs:
     train_data: TrainData
@@ -80,12 +73,12 @@ class TrainDataPrepOutputs:
 
 @dataclass
 class TrainDataPrepInputs:
-    train_df: pd.DataFrame
+    train_data: RawTrainData
     ohe_bool: bool
     target_variable: str
 
     def train_data_prep(self) -> TrainDataPrepOutputs:
-        train_df = _eda_clean(self.train_df)
+        train_df = _eda_clean(self.train_data.df)
         train_df, _ = _clean_after_eda(train_df)
 
         ord_enc = _ordinal_encode(train_df)
@@ -102,11 +95,11 @@ class TrainDataPrepInputs:
 
 @dataclass
 class TestDataPrepInputs:
-    test_df: pd.DataFrame
+    test_df: RawTestingData
     categorical_encoders: CategoricalEncoders
 
     def test_data_prep(self) -> pd.DataFrame:
-        test_df = _eda_clean(self.test_df)
+        test_df = _eda_clean(self.test_df.df)
         test_df, _ = _clean_after_eda(test_df)
 
         test_df = _ordinal_transform(test_df, self.categorical_encoders.ordinal_encoder)
@@ -114,11 +107,6 @@ class TestDataPrepInputs:
         test_X = _categorical_transform(test_df, self.categorical_encoders.categorical_encoder)
 
         return test_X
-
-
-
-
-
 
 
 def _eda_clean(df: pd.DataFrame) -> pd.DataFrame:
@@ -132,10 +120,11 @@ def _eda_clean(df: pd.DataFrame) -> pd.DataFrame:
     # Also make these columns categorical rather than strings so that we can order the ordinal categoricals
     objects = df.select_dtypes(include=object).columns
     df[objects] = df[objects].apply(
-        lambda col: pd.Categorical(_convert_na_to_string(col), categories=_ORDERED_CATEGORICALS[col.name],
-                                   ordered=True) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(
-            _convert_na_to_string(col))
-    )
+        lambda col: pd.Categorical(
+            _convert_na_to_string(col),
+            categories=_ORDERED_CATEGORICALS[col.name],
+            ordered=True
+        ) if col.name in _ORDERED_CATEGORICALS else pd.Categorical(_convert_na_to_string(col)))
 
     # ID is unique for each row so it should not be categorical
     df["Id"] = df.Id.astype(str)
@@ -160,6 +149,7 @@ def _convert_na_to_string(col):
 
 def _clean_after_eda(df: pd.DataFrame) -> tuple[pd.DataFrame, impute.KNNImputer]:
     """
+    TODO: remove imputer from return
     Set ID column to data index, and impute nulls with iterative imputer. Iterative imputer is experimental, and
     documentation can be found at https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html
     :param df: pandas dataframe with ID column
@@ -207,6 +197,7 @@ def _ordinal_transform(df: pd.DataFrame, enc: preprocessing.OrdinalEncoder) -> p
     return df
 
 
+# TODO: Create an enum class that is OneHotEncoder or OrdinalEncoder only. Return that class here.
 def _categorical_encoder(df: pd.DataFrame, ohe: bool) -> (preprocessing.OneHotEncoder | preprocessing.OrdinalEncoder):
     """
     Categorical encoding for non-ordinal categorical variables
@@ -222,7 +213,10 @@ def _categorical_encoder(df: pd.DataFrame, ohe: bool) -> (preprocessing.OneHotEn
     return cat_enc
 
 
-def _categorical_transform(df: pd.DataFrame, cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder) -> pd.DataFrame:
+def _categorical_transform(
+        df: pd.DataFrame,
+        cat_enc: preprocessing.OrdinalEncoder | preprocessing.OneHotEncoder
+) -> pd.DataFrame:
     """
     Use fit categorical encoder to transform dataset
     """
