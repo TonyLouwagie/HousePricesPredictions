@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn import impute, preprocessing  # type: ignore
 
-from data_load import RawTrainData, RawTestingData
+from data_load import RawTestingData, RawTrainingData
 
 _LOT_SHAPE = ['Reg', 'IR1', 'IR2', 'IR3', 'NA']
 _UTILITIES = ['AllPub', 'NoSewr', 'NoSeWa', 'ELO', 'NA']
@@ -73,7 +73,7 @@ class TrainDataPrepOutputs:
 
 @dataclass
 class TrainDataPrepInputs:
-    train_data: RawTrainData
+    train_data: RawTrainingData
     ohe_bool: bool
     target_variable: str
 
