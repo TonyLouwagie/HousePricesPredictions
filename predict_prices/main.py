@@ -90,8 +90,8 @@ def main():
 
     # 1. read in train and test data
     train_df = data_load.load_training_data(train_filepath)
-
     test_df = data_load.load_testing_data(test_filepath)
+
     train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable)
     pure_pipeline_inputs = PurePipeline(hyper_param_map,train_data_prep_inputs, test_df, n_iter, folds)
 
