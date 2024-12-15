@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import pandas as pd
 import pandera as pa
@@ -127,7 +126,7 @@ _MiscFeature_Options = ['Elev','Gar2','Othr','Shed','TenC','NA']
 _SaleType_Options = ['WD','CWD','VWD','New','COD','Con','ConLw','ConLI','ConLD','Oth']
 _SaleCondition_Options = ['Normal','Abnorml','AdjLand','Alloca','Family','Partial']
 
-class RawFeatureSchema(pa.DataFrameModel):
+class _RawFeatureSchema(pa.DataFrameModel):
     Id: Series[int] = pa.Field(gt=0)
     MSSubClass: Series[int] = pa.Field(isin=_MSSubClass_Options)
     MSZoning: Series[str] = pa.Field(isin=_MSZoning_Options, nullable=True)
@@ -210,8 +209,8 @@ class RawFeatureSchema(pa.DataFrameModel):
     SaleCondition: Series[str] = pa.Field(isin=_SaleCondition_Options)
 
 
-class RawTargetSchema(pa.DataFrameModel):
-    SalePrice: Optional[Series[int]] = pa.Field(gt=0)
+class _RawTargetSchema(pa.DataFrameModel):
+    SalePrice: Series[int] = pa.Field(gt=0)
 
 
 @dataclass
@@ -219,7 +218,7 @@ class RawTestingData:
     df: pd.DataFrame
 
     def __post_init__(self):
-        RawFeatureSchema.validate(self.df)
+        _RawFeatureSchema.validate(self.df)
 
 
 @dataclass
@@ -230,8 +229,8 @@ class RawTrainingData:
         features_df = self.df.drop('SalePrice', axis=1)
         target_data = pd.DataFrame(self.df['SalePrice'])
 
-        RawFeatureSchema.validate(features_df)
-        RawTargetSchema.validate(target_data)
+        _RawFeatureSchema.validate(features_df)
+        _RawTargetSchema.validate(target_data)
 
 
 def load_training_data(filepath: str) -> RawTrainingData:
