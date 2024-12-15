@@ -22,20 +22,19 @@ class PurePipeline:
     def run(self):
         # 1. perform data prep on training data
         train_data_prep_outputs = self.train_data_prep_inputs.train_data_prep()
-        print("prepped training data")
 
         # 2. Measure performance of all of our different models
         champ_parameters = self.model_hyperparameter_map.measure_model_performance(train_data_prep_outputs, self.n_iter, self.folds)
-        print("measuring model performance")
+
         # 3. apply data prep from training to test data
         test_data_prep_inputs = data_prep.TestDataPrepInputs(self.testing_data, champ_parameters.categorical_encoders)
         test_X = test_data_prep_inputs.test_data_prep()
-        print("prepped testing data")
+
         # 4. predict test data
         # the model was trained against log transformed target. Invert log for predictions
         test_y = np.exp(champ_parameters.model.predict(test_X))
         test_y = pd.DataFrame(test_y, columns=[self.train_data_prep_inputs.target_variable], index=test_X.index)
-        print("generated predictions")
+
         return test_y
 
 
@@ -91,10 +90,8 @@ def main():
 
     # 1. read in train and test data
     train_df = data_load.load_training_data(train_filepath)
-    print(" read in training data")
-
     test_df = data_load.load_testing_data(test_filepath)
-    print("read in testing data")
+
     train_data_prep_inputs = data_prep.TrainDataPrepInputs(train_df, ohe_bool, target_variable)
     pure_pipeline_inputs = PurePipeline(hyper_param_map,train_data_prep_inputs, test_df, n_iter, folds)
 

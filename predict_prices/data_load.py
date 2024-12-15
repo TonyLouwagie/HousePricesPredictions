@@ -127,91 +127,6 @@ _MiscFeature_Options = ['Elev','Gar2','Othr','Shed','TenC','NA']
 _SaleType_Options = ['WD','CWD','VWD','New','COD','Con','ConLw','ConLI','ConLD','Oth']
 _SaleCondition_Options = ['Normal','Abnorml','AdjLand','Alloca','Family','Partial']
 
-_RAW_FEATURES = {
-    "Id": pa.Column(int, pa.Check.greater_than(0)),
-    "MSSubClass": pa.Column(int, pa.Check.isin(_MSSubClass_Options)),
-    "MSZoning": pa.Column(str, pa.Check.isin(_MSZoning_Options), nullable=True),
-    "LotFrontage": pa.Column(int, pa.Check.greater_than(0), nullable=True),
-    "LotArea": pa.Column(int, pa.Check.greater_than(0)),
-    "Street": pa.Column(str, pa.Check.isin(_Street_Options)),
-    "Alley": pa.Column(str, pa.Check.isin(_Alley_Options), nullable=True),
-    "LotShape": pa.Column(str, pa.Check.isin(_LotShape_Options)),
-    "LandContour": pa.Column(str, pa.Check.isin(_LandCountour_Options)),
-    "Utilities": pa.Column(str, pa.Check.isin(_Utilities_Options), nullable=True),
-    "LotConfig": pa.Column(str, pa.Check.isin(_LotConfig_Options)),
-    "LandSlope": pa.Column(str, pa.Check.isin(_LandSlope_Options)),
-    "Neighborhood": pa.Column(str, pa.Check.isin(_Neighborhood_Options)),
-    "Condition1": pa.Column(str, pa.Check.isin(_Condition_Options)),
-    "Condition2": pa.Column(str, pa.Check.isin(_Condition_Options)),
-    "BldgType": pa.Column(str, pa.Check.isin(_BldgType_Options)),
-    "HouseStyle": pa.Column(str, pa.Check.isin(_HouseStyle_Options)),
-    "OverallQual": pa.Column(int, pa.Check.isin(range(1,11))),
-    "OverallCond": pa.Column(int, pa.Check.isin(range(1,11))),
-    "YearBuilt": pa.Column(int, pa.Check.greater_than(1799)),
-    "YearRemodAdd": pa.Column(int, pa.Check.greater_than(1799)),
-    "RoofStyle": pa.Column(str, pa.Check.isin(_RoofStyle_Options)),
-    "RoofMatl": pa.Column(str, pa.Check.isin(_RoofMatl_Options)),
-    "Exterior1st": pa.Column(str, pa.Check.isin(_Exterior_Options), nullable=True),
-    "Exterior2nd": pa.Column(str, pa.Check.isin(_Exterior_Options), nullable=True),
-    "MasVnrType": pa.Column(str, pa.Check.isin(_MasVnrTyp_Options), nullable=True),
-    "MasVnrArea": pa.Column(int, pa.Check.greater_than_or_equal_to(0), nullable=True),
-    "ExterQual": pa.Column(str, pa.Check.isin(_Quality_Options)),
-    "ExterCond": pa.Column(str, pa.Check.isin(_Quality_Options)),
-    "Foundation": pa.Column(str, pa.Check.isin(_Foundation_Options)),
-    "BsmtQual": pa.Column(str, pa.Check.isin(_QualityNA_Options), nullable=True),
-    "BsmtCond": pa.Column(str, pa.Check.isin(_QualityNA_Options), nullable=True),
-    "BsmtExposure": pa.Column(str, pa.Check.isin(_BsmtExposure_Options), nullable=True),
-    "BsmtFinType1": pa.Column(str, pa.Check.isin(_BsmtFinType_Options), nullable=True),
-    "BsmtFinSF1": pa.Column(int, pa.Check.greater_than_or_equal_to(0), nullable=True),
-    "BsmtFinType2": pa.Column(str, pa.Check.isin(_BsmtFinType_Options), nullable=True),
-    "BsmtFinSF2": pa.Column(int, nullable=True),
-    "BsmtUnfSF": pa.Column(int, pa.Check.greater_than_or_equal_to(0), nullable=True),
-    "TotalBsmtSF": pa.Column(int, pa.Check.greater_than_or_equal_to(0), nullable=True),
-    "Heating": pa.Column(str),
-    "HeatingQC": pa.Column(str),
-    "CentralAir": pa.Column(str),
-    "Electrical": pa.Column(str, nullable=True),
-    "1stFlrSF": pa.Column(int),
-    "2ndFlrSF": pa.Column(int),
-    "LowQualFinSF": pa.Column(int),
-    "GrLivArea": pa.Column(int),
-    "BsmtFullBath": pa.Column(int, nullable=True),
-    "BsmtHalfBath": pa.Column(int, nullable=True),
-    "FullBath": pa.Column(int),
-    "HalfBath": pa.Column(int),
-    "BedroomAbvGr": pa.Column(int),
-    "KitchenAbvGr": pa.Column(int),
-    "KitchenQual": pa.Column(str, nullable=True),
-    "TotRmsAbvGrd": pa.Column(int),
-    "Functional": pa.Column(str, nullable=True),
-    "Fireplaces": pa.Column(int),
-    "FireplaceQu": pa.Column(str, nullable=True),
-    "GarageType": pa.Column(str, nullable=True),
-    "GarageYrBlt": pa.Column(int, nullable=True),
-    "GarageFinish": pa.Column(str, nullable=True),
-    "GarageCars": pa.Column(int, nullable=True),
-    "GarageArea": pa.Column(int, nullable=True),
-    "GarageQual": pa.Column(str, nullable=True),
-    "GarageCond": pa.Column(str, nullable=True),
-    "PavedDrive": pa.Column(str),
-    "WoodDeckSF": pa.Column(int),
-    "OpenPorchSF": pa.Column(int),
-    "EnclosedPorch": pa.Column(int),
-    "3SsnPorch": pa.Column(int),
-    "ScreenPorch": pa.Column(int),
-    "PoolArea": pa.Column(int),
-    "PoolQC": pa.Column(str, nullable=True),
-    "Fence": pa.Column(str, nullable=True),
-    "MiscFeature": pa.Column(str, nullable=True),
-    "MiscVal": pa.Column(int),
-    "MoSold": pa.Column(int),
-    "YrSold": pa.Column(int),
-    "SaleType": pa.Column(str, nullable=True),
-    "SaleCondition": pa.Column(str),
-}
-_TARGET = {"SalePrice": pa.Column(int)}
-
-
 class RawFeatureSchema(pa.DataFrameModel):
     Id: Series[int] = pa.Field(gt=0)
     MSSubClass: Series[int] = pa.Field(isin=_MSSubClass_Options)
@@ -292,6 +207,7 @@ class RawFeatureSchema(pa.DataFrameModel):
     MoSold: Series[int] = pa.Field(isin=range(1,13))
     YrSold: Series[int] = pa.Field(gt=1799)
     SaleType: Series[str] = pa.Field(isin=_SaleType_Options, nullable=True)
+    SaleCondition: Series[str] = pa.Field(isin=_SaleCondition_Options)
 
 
 class RawTargetSchema(pa.DataFrameModel):
