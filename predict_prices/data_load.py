@@ -223,7 +223,7 @@ class RawTestingData:
 
 @dataclass
 class RawTrainingData:
-    df:pd.DataFrame
+    df: pd.DataFrame
 
     def __post_init__(self):
         features_df = self.df.drop('SalePrice', axis=1)

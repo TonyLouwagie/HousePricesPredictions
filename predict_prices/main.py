@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import lightgbm
 import numpy as np
 import pandas as pd
+import pandera as pa
+from pandera.typing import Series
 from sklearn import ensemble, linear_model  # type: ignore
 import xgboost
 
@@ -10,6 +12,18 @@ import data_load
 import data_prep
 from hyperparameter_tuning import ModelHyperparameterMap
 
+class _PredictionsSchema(pa.DataFrameModel):
+    SalePrice: Series[float] = pa.Field(gt=0)
+
+@dataclass
+class Predictions:
+    df: pd.DataFrame
+
+    def __post_init__(self):
+        _PredictionsSchema.validate(self.df)
+
+    def to_csv(self, fn: str):
+        self.df.to_csv(fn)
 
 @dataclass
 class PurePipeline:
@@ -19,7 +33,7 @@ class PurePipeline:
     n_iter: int
     folds: int
 
-    def run(self):
+    def run(self) -> Predictions:
         # 1. perform data prep on training data
         train_data_prep_outputs = self.train_data_prep_inputs.train_data_prep()
 
@@ -35,7 +49,7 @@ class PurePipeline:
         test_y = np.exp(champ_parameters.model.predict(test_X))
         test_y = pd.DataFrame(test_y, columns=[self.train_data_prep_inputs.target_variable], index=test_X.index)
 
-        return test_y
+        return Predictions(test_y)
 
 
 def main():
